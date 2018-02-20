@@ -1,0 +1,10 @@
+*.pyc
+*.npy
+*.h5
+__pycache__
+*.tar
+*.gz
+*.bz2
+*.xz
+*.zip
+*.rar

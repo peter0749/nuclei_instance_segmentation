@@ -1,5 +1,5 @@
 # U-Net for semantic segmentation
-U_NET_DIM = 128
+U_NET_DIM = 64
 
 # YOLO step-by-step ref:
 # https://github.com/experiencor/basic-yolo-keras/blob/master/Yolo%20Step-by-Step.ipynb

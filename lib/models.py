@@ -1,5 +1,6 @@
 import config as conf
 import losses
+import metrics
 import numpy as np
 
 ### Yolo model:
@@ -268,6 +269,6 @@ def get_U_Net_model():
 
     outputs = Conv2D(2, (1, 1), activation='sigmoid') (c11)
     model = Model(inputs=[inputs], outputs=[outputs])
-    model.compile(loss=losses.unet_loss, metrics=[losses.mean_iou, losses.mean_iou_marker], optimizer='adam')
+    model.compile(loss=losses.unet_loss, metrics=[metrics.mean_iou, metrics.mean_iou_marker], optimizer='adam')
     return model
 ### end U-Net model
