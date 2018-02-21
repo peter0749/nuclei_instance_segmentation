@@ -153,8 +153,7 @@ def yolo_loss(true_boxes):
         current_recall = nb_pred_box/(nb_true_box + 1e-6)
         total_recall = tf.assign_add(total_recall, current_recall)
 
-        loss = tf.Print(loss, [tf.zeros((1))], message='\nDummy Line \t', summarize=1000)
-        loss = tf.Print(loss, [loss_xy], message='Loss XY \t', summarize=1000)
+        loss = tf.Print(loss, [loss_xy], message='\nLoss XY \t', summarize=1000)
         loss = tf.Print(loss, [loss_wh], message='Loss WH \t', summarize=1000)
         loss = tf.Print(loss, [loss_conf], message='Loss Conf \t', summarize=1000)
         loss = tf.Print(loss, [loss], message='Total Loss \t', summarize=1000)
