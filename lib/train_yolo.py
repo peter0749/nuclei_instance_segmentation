@@ -1,5 +1,6 @@
 import tensorflow as tf
 import keras
+from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
 import models
 import reader
 import config as conf
@@ -14,8 +15,8 @@ print('Generating metadata...')
 train_imgs = reader.dataset_filepath(conf.DATA_PATH)
 train_imgs, val_imgs = train_test_split(train_imgs, test_size=conf.VALID_SPLIT, shuffle=True)
 
-train_batch = YOLO_BatchGenerator(train_imgs, conf.generator_config, norm=normalize)
-valid_batch = YOLO_BatchGenerator(val_imgs, conf.generator_config, norm=normalize)
+train_batch = YOLO_BatchGenerator(train_imgs, conf.yolo_generator_config, norm=normalize)
+valid_batch = YOLO_BatchGenerator(val_imgs, conf.yolo_generator_config, norm=normalize)
 
 early_stop = EarlyStopping(monitor='val_loss',
                            min_delta=0.001,
@@ -35,12 +36,13 @@ tensorboard = TensorBoard(log_dir=conf.YOLO_TFBOARD_DIR,
                           write_graph=True,
                           write_images=False)
 
-model.fit_generator(generator        = train_batch,
+yolo_model.fit_generator(generator        = train_batch,
                     steps_per_epoch  = len(train_batch),
                     epochs           = 100,
                     verbose          = 1,
                     validation_data  = valid_batch,
                     validation_steps = len(valid_batch),
                     callbacks        = [early_stop, checkpoint, tensorboard],
-                    max_queue_size   = 3)
+                    max_queue_size   = 3, 
+                    workers = 2)
 

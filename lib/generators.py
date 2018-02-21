@@ -89,7 +89,7 @@ class YOLO_BatchGenerator(Sequence):
             true_box_index = 0
 
             for obj in all_objs:
-                if obj['xmax'] > obj['xmin'] and obj['ymax'] > obj['ymin'] and obj['name'] in self.config['LABELS']:
+                if obj['xmax'] > obj['xmin'] and obj['ymax'] > obj['ymin']:
                     center_x = .5*(obj['xmin'] + obj['xmax'])
                     center_x = center_x / (float(self.config['IMAGE_W']) / self.config['GRID_W'])
                     center_y = .5*(obj['ymin'] + obj['ymax'])
@@ -99,8 +99,6 @@ class YOLO_BatchGenerator(Sequence):
                     grid_y = int(np.floor(center_y))
 
                     if grid_x < self.config['GRID_W'] and grid_y < self.config['GRID_H']:
-                        obj_indx  = self.config['LABELS'].index(obj['name'])
-
                         center_w = (obj['xmax'] - obj['xmin']) / (float(self.config['IMAGE_W']) / self.config['GRID_W']) # unit: grid cell
                         center_h = (obj['ymax'] - obj['ymin']) / (float(self.config['IMAGE_H']) / self.config['GRID_H']) # unit: grid cell
 
@@ -126,7 +124,6 @@ class YOLO_BatchGenerator(Sequence):
                         # assign ground truth x, y, w, h, confidence and class probs to y_batch
                         y_batch[instance_count, grid_y, grid_x, best_anchor, 0:4] = box
                         y_batch[instance_count, grid_y, grid_x, best_anchor, 4  ] = 1.
-                        y_batch[instance_count, grid_y, grid_x, best_anchor, 5+obj_indx] = 1
 
                         # assign the true box to b_batch
                         b_batch[instance_count, 0, 0, 0, true_box_index] = box
@@ -135,24 +132,10 @@ class YOLO_BatchGenerator(Sequence):
                         true_box_index = true_box_index % self.config['TRUE_BOX_BUFFER']
 
             # assign input image to x_batch
-            if self.norm != None:
-                x_batch[instance_count] = self.norm(img)
-            else:
-                # plot image and bounding boxes for sanity check
-                for obj in all_objs:
-                    if obj['xmax'] > obj['xmin'] and obj['ymax'] > obj['ymin']:
-                        cv2.rectangle(img[:,:,::-1], (obj['xmin'],obj['ymin']), (obj['xmax'],obj['ymax']), (255,0,0), 3)
-                        cv2.putText(img[:,:,::-1], obj['name'],
-                                    (obj['xmin']+2, obj['ymin']+12),
-                                    0, 1.2e-3 * img.shape[0],
-                                    (0,255,0), 2)
-
-                x_batch[instance_count] = img
+            x_batch[instance_count] = self.norm(img)
 
             # increase instance counter in current batch
             instance_count += 1
-
-        #print ' new batch created', idx
 
         return [x_batch, b_batch], y_batch
 
@@ -163,7 +146,7 @@ class YOLO_BatchGenerator(Sequence):
         image_name = train_instance['image']
         image = cv2.imread(image_name)
 
-        if image is None: print 'Cannot find ', image_name
+        if image is None: print('Cannot find ' + str(image_name))
 
         h, w, c = image.shape
         assert h==train_instance['height'] and w==train_instance['width']
