@@ -1,3 +1,7 @@
+# ROOT TO DATASET (DATA & TEST)
+DATA_PATH = './stage1_train' # this will split into training/validation
+TEST_PATH = './stage1_test'
+
 # U-Net for semantic segmentation
 U_NET_DIM = 64
 

@@ -1,5 +1,6 @@
 import config as conf
 import glob
+from get_image_size import get_image_size
 '''
 An utility to read all filepaths of images and their masks
 '''
@@ -13,7 +14,10 @@ def dataset_filepath(root):
     dir_list = []
     for subdir in glob.glob(root):
         image = {'image': str(glob.glob(subdir+'/images/*.png')[0])}
-        masks = list(glob.glob(subdir+'/masks/*.png'))
+        width, height = get_image_size(image['image'])
+        image['width'] = width
+        image['height']= height
+        masks = list(map(str, glob.glob(subdir+'/masks/*.png')))
         image['masks'] = masks
         dir_list.append(image)
     return dir_list
