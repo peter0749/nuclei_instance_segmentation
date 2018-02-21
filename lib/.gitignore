@@ -1,7 +1,8 @@
+__pycache__
+stage1*
 *.pyc
 *.npy
 *.h5
-__pycache__
 *.tar
 *.gz
 *.bz2
