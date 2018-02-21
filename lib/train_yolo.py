@@ -42,7 +42,7 @@ tensorboard = TensorBoard(log_dir=conf.YOLO_TFBOARD_DIR,
 
 yolo_model.fit_generator(generator        = train_batch,
                     steps_per_epoch  = len(train_batch),
-                    epochs           = 100,
+                    epochs           = conf.YOLO_EPOCHS,
                     verbose          = 1,
                     validation_data  = valid_batch,
                     validation_steps = len(valid_batch),

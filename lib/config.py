@@ -24,6 +24,9 @@ BOX = 5
 YOLO_BATCH_SIZE=8
 U_NET_BATCH_SIZE=8
 
+YOLO_EPOCHS=250
+U_NET_EPOCHS=300
+
 YOLO_CKPT = '/home/peter/yolo.h5'
 
 YOLO_TFBOARD_DIR = '/home/peter/yolo_tfboard'
