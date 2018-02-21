@@ -144,21 +144,13 @@ def yolo_loss(true_boxes):
 
         loss = loss_xy + loss_wh + loss_conf
 
-        nb_true_box = tf.reduce_sum(y_true[..., 4])
-        nb_pred_box = tf.reduce_sum(tf.to_float(true_box_conf > 0.5) * tf.to_float(pred_box_conf > 0.3))
-
         """
         Debugging code
         """
-        current_recall = nb_pred_box/(nb_true_box + 1e-6)
-        total_recall = tf.assign_add(total_recall, current_recall)
 
         loss = tf.Print(loss, [loss_xy], message='\nLoss XY \t', summarize=1000)
         loss = tf.Print(loss, [loss_wh], message='Loss WH \t', summarize=1000)
         loss = tf.Print(loss, [loss_conf], message='Loss Conf \t', summarize=1000)
-        loss = tf.Print(loss, [loss], message='Total Loss \t', summarize=1000)
-        loss = tf.Print(loss, [current_recall], message='Current Recall \t', summarize=1000)
-        loss = tf.Print(loss, [total_recall/seen], message='Average Recall \t', summarize=1000)
 
         return loss
     return func

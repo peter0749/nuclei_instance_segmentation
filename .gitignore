@@ -1,0 +1,7 @@
+nohup.out
+*.h5
+*.pyc
+*.npy
+*.csv
+*.png
+*.jpg

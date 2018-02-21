@@ -31,11 +31,7 @@ YOLO_CKPT = '/home/peter/yolo.h5'
 
 YOLO_TFBOARD_DIR = '/home/peter/yolo_tfboard'
 YOLO_OPT_ARGS = {
-    'lr'              : 0.5e-4,
-    'beta_1'          : 0.9,
-    'beta_2'          : 0.999,
-    'epsilon'         : 1e-08,
-    'decay'           : 0.0
+    'lr'              : 1e-4,
 }
 YOLO_EARLY_STOP = 20
 
