@@ -1,6 +1,7 @@
 # ROOT TO DATASET (DATA & TEST)
 DATA_PATH = './stage1_train' # this will split into training/validation
 TEST_PATH = './stage1_test'
+VALID_SPLIT = 0.1
 
 # U-Net for semantic segmentation
 U_NET_DIM = 64
@@ -22,6 +23,15 @@ BOX = 5
 
 YOLO_BATCH_SIZE=16
 U_NET_BATCH_SIZE=8
+
+YOLO_TFBOARD_DIR = './yolo_tfboard'
+YOLO_OPT_ARGS = {
+    'lr'              : 0.5e-4,
+    'beta_1'          : 0.9,
+    'beta_2'          : 0.999,
+    'epsilon'         : 1e-08,
+    'decay'           : 0.0
+}
 
 ### !!! DO NOT EDITING THE CONFIGURATION BELOW !!! ###
 

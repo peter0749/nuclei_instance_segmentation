@@ -149,7 +149,7 @@ def get_yolo_model():
     # for more information: https://github.com/fchollet/keras/issues/2790
     output = Lambda(lambda args: args[0])([output, true_boxes])
     model = Model([input_image, true_boxes], output)
-    optimizer = Adam(lr=0.5e-4, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
+    optimizer = Adam(**conf.YOLO_OPT_ARGS)
     model.compile(loss=losses.yolo_loss(true_boxes), optimizer=optimizer)
     return model
 ### end Yolo model
