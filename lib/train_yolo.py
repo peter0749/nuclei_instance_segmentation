@@ -10,6 +10,7 @@ from generators import YOLO_BatchGenerator
 yolo_model = models.get_yolo_model()
 yolo_model.summary()
 
+print('Generating metadata...')
 train_imgs = reader.dataset_filepath(conf.DATA_PATH)
 train_imgs, val_imgs = train_test_split(train_imgs, test_size=conf.VALID_SPLIT, shuffle=True)
 
