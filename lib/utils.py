@@ -15,7 +15,7 @@ class BoundBox:
         return self.c
 
 def normalize(image):
-    return image / 255.
+    return image.astype(np.float32) / 255.
 
 def sigmoid(x):
     return 1. / (1. + np.exp(-x))

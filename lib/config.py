@@ -31,7 +31,8 @@ YOLO_CKPT = '/home/peter/yolo.h5'
 
 YOLO_TFBOARD_DIR = '/home/peter/yolo_tfboard'
 YOLO_OPT_ARGS = {
-    'lr'              : 1e-4,
+    'lr'              : 1e-4, 
+    'clipnorm'        : 1.0 ,
 }
 YOLO_EARLY_STOP = 20
 
