@@ -21,8 +21,10 @@ WARM_UP_BATCHES  = 0
 TRUE_BOX_BUFFER  = 50
 BOX = 5
 
-YOLO_BATCH_SIZE=16
+YOLO_BATCH_SIZE=8
 U_NET_BATCH_SIZE=8
+
+YOLO_CKPT = '/home/peter/yolo.h5'
 
 YOLO_TFBOARD_DIR = '/home/peter/yolo_tfboard'
 YOLO_OPT_ARGS = {
@@ -32,6 +34,7 @@ YOLO_OPT_ARGS = {
     'epsilon'         : 1e-08,
     'decay'           : 0.0
 }
+YOLO_EARLY_STOP = 20
 
 ### !!! DO NOT EDITING THE CONFIGURATION BELOW !!! ###
 

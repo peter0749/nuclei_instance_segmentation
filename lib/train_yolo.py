@@ -1,4 +1,7 @@
 import tensorflow as tf
+tfconfig = tf.ConfigProto()
+tfconfig.gpu_options.allow_growth = True
+session = tf.Session(config=tfconfig)
 import keras
 from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
 import models
@@ -20,14 +23,15 @@ valid_batch = YOLO_BatchGenerator(val_imgs, conf.yolo_generator_config, norm=nor
 
 early_stop = EarlyStopping(monitor='val_loss',
                            min_delta=0.001,
-                           patience=3,
+                           patience=conf.YOLO_EARLY_STOP,
                            mode='min',
                            verbose=1)
 
-checkpoint = ModelCheckpoint('weights_nuclei.h5',
+checkpoint = ModelCheckpoint(conf.YOLO_CKPT,
                              monitor='val_loss',
                              verbose=1,
                              save_best_only=True,
+                             save_weights_only=True,
                              mode='min',
                              period=1)
 
