@@ -21,7 +21,7 @@ WARM_UP_BATCHES  = 0
 TRUE_BOX_BUFFER  = 50
 BOX = 5
 
-YOLO_BATCH_SIZE=8
+YOLO_BATCH_SIZE=10
 U_NET_BATCH_SIZE=8
 
 YOLO_EPOCHS=250
@@ -32,7 +32,7 @@ YOLO_CKPT = '/home/peter/yolo.h5'
 YOLO_TFBOARD_DIR = '/home/peter/yolo_tfboard'
 YOLO_OPT_ARGS = {
     'lr'              : 1e-4, 
-    'clipnorm'        : 1.0 ,
+    'clipvalue'       : 0.1 , 
 }
 YOLO_EARLY_STOP = 20
 
