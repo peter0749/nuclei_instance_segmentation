@@ -5,6 +5,7 @@ import reader
 import config as conf
 from sklearn.model_selection import train_test_split
 from utils import normalize
+from generators import YOLO_BatchGenerator
 
 yolo_model = models.get_yolo_model()
 yolo_model.summary()
@@ -12,8 +13,8 @@ yolo_model.summary()
 train_imgs = reader.dataset_filepath(conf.DATA_PATH)
 train_imgs, val_imgs = train_test_split(train_imgs, test_size=conf.VALID_SPLIT, shuffle=True)
 
-train_batch = BatchGenerator(train_imgs, conf.generator_config, norm=normalize)
-valid_batch = BatchGenerator(val_imgs, conf.generator_config, norm=normalize)
+train_batch = YOLO_BatchGenerator(train_imgs, conf.generator_config, norm=normalize)
+valid_batch = YOLO_BatchGenerator(val_imgs, conf.generator_config, norm=normalize)
 
 early_stop = EarlyStopping(monitor='val_loss',
                            min_delta=0.001,

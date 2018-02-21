@@ -11,7 +11,7 @@ from reader import dataset_filepath
 import config as conf
 
 ### YOLO generator
-class BatchGenerator(Sequence):
+class YOLO_BatchGenerator(Sequence):
     def __init__(self, images,
                        config,
                        shuffle=True,
