@@ -4,6 +4,7 @@ import tensorflow as tf
 import copy
 import cv2
 import numpy as np
+import config as conf
 
 class BoundBox:
     def __init__(self, x, y, w, h, c = None):
@@ -74,13 +75,14 @@ def draw_boxes(image_, boxes):
         ymin  = int((box.y - box.h/2) * image.shape[0])
         ymax  = int((box.y + box.h/2) * image.shape[0])
 
-        cv2.rectangle(image, (xmin,ymin), (xmax,ymax), (0,255,0), 3)
-        cv2.putText(image,
-                    str(box.get_score()),
-                    (xmin, ymin - 13),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    1e-3 * image.shape[0],
-                    (0,255,0), 2)
+        cv2.rectangle(image, (xmin,ymin), (xmax,ymax), (0,255,0), conf.YOLO_DRAW_LINE_W)
+        if conf.YOLO_SHOW_CONF:
+            cv2.putText(image,
+                        str(box.get_score()),
+                        (xmin, ymin - 13),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        1e-3 * image.shape[0],
+                        (0,255,0), 2)
     return image
 
 ### modified version for binary classification
