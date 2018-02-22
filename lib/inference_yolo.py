@@ -21,7 +21,7 @@ print('Generating metadata...')
 imgs_meta  = reader.dataset_filepath(conf.TEST_PATH, get_masks=False)
 imgs_batch, imgs_original, imgs_path = reader.dir_reader(imgs_meta)
 
-netouts = yolo_model.predict([imgs_batch, imgs_meta], batch_size=conf.YOLO_BATCH_SIZE)
+netouts = yolo_model.predict([imgs_batch, np.zeros((len(imgs_batch), 1, 1, 1, conf.TRUE_BOX_BUFFER, 4))], batch_size=conf.YOLO_BATCH_SIZE)
 del imgs_batch
 gc.collect() # release memory
 
