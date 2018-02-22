@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import gc
 import tensorflow as tf
 tfconfig = tf.ConfigProto()
