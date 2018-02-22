@@ -8,7 +8,7 @@ from skimage.io import imread
 An utility to read all filepaths of images and their masks
 '''
 
-def dataset_filepath(root):
+def dataset_filepath(root, get_masks=True):
     '''
     input: a full path to root of dataset
     output: a list of filepath of images and their masks
@@ -21,12 +21,13 @@ def dataset_filepath(root):
         image['width'] = width
         image['height']= height
 
-        image['masks'] = []
-        for mask_path in glob.glob(subdir+'/masks/*.png'):
-            mask = imread(mask_path, as_grey=True)
-            assert mask.ndim == 2
-            (ymin, xmin, ymax, xmax) = regionprops((mask>0).astype(np.int32), cache=True)[0].bbox
-            image['masks'].append({'mask': mask_path, 'ymin': ymin, 'xmin': xmin, 'ymax': ymax, 'xmax': xmax}) # get bounding box
+        if get_masks:
+            image['masks'] = []
+            for mask_path in glob.glob(subdir+'/masks/*.png'):
+                mask = imread(mask_path, as_grey=True)
+                assert mask.ndim == 2
+                (ymin, xmin, ymax, xmax) = regionprops((mask>0).astype(np.int32), cache=True)[0].bbox
+                image['masks'].append({'mask': mask_path, 'ymin': ymin, 'xmin': xmin, 'ymax': ymax, 'xmax': xmax}) # get bounding box
 
         dir_list.append(image)
     return dir_list
