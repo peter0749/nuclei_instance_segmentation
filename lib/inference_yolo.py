@@ -7,7 +7,7 @@ session = tf.Session(config=tfconfig)
 import keras
 from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
 import models
-import reader.dataset_filepath, reader.dir_reader
+import reader
 import config as conf
 from sklearn.model_selection import train_test_split
 from generators import YOLO_BatchGenerator

@@ -1,6 +1,6 @@
 import config as conf
 import numpy as np
-import tqdm
+from tqdm import tqdm
 import glob
 from get_image_size import get_image_size
 from skimage.measure import regionprops
