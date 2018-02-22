@@ -18,8 +18,8 @@ print('Generating metadata...')
 train_imgs = reader.dataset_filepath(conf.DATA_PATH)
 train_imgs, val_imgs = train_test_split(train_imgs, test_size=conf.VALID_SPLIT, shuffle=True)
 
-train_batch = YOLO_BatchGenerator(train_imgs, conf.yolo_generator_config, norm=normalize)
-valid_batch = YOLO_BatchGenerator(val_imgs, conf.yolo_generator_config, norm=normalize)
+train_batch = YOLO_BatchGenerator(train_imgs, conf.yolo_generator_config, shuffle=True, jitter=True, norm=normalize) # shuffle and aug
+valid_batch = YOLO_BatchGenerator(val_imgs, conf.yolo_generator_config, shuffle=False, jitter=False, norm=normalize) # not shuffle and not aug
 
 early_stop = EarlyStopping(monitor='val_loss',
                            min_delta=0.0001,
