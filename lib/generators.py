@@ -174,7 +174,6 @@ class YOLO_BatchGenerator(Sequence):
 
         # resize the image to standard size
         image = cv2.resize(image, (self.config['IMAGE_H'], self.config['IMAGE_W']))
-        image = image[:,:,::-1]
 
         # fix object's position and size
         for obj in all_objs:
