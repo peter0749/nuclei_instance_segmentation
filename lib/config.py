@@ -34,9 +34,10 @@ YOLO_TFBOARD_DIR = '/home/peter/yolo_tfboard'
 YOLO_OPT_ARGS = {
     'lr'              : 1e-4, 
     'clipvalue'       : 0.1 , 
+    'clipnorm'        : 1.0 ,
 }
 YOLO_MIN_LOSS = 0
-YOLO_MAX_LOSS = 30 # This prevent nans. If your loss is not chaning, then set a higher value.
+YOLO_MAX_LOSS = 10 # This prevent nans. If your loss is not chaning, then set a higher value.
 YOLO_EARLY_STOP = 20
 
 ### !!! DO NOT EDITING THE CONFIGURATION BELOW !!! ###
