@@ -16,10 +16,10 @@ from generators import YOLO_BatchGenerator
 from utils import decode_netout, draw_boxes
 import cv2
 
-yolo_model = models.get_yolo_model()
+yolo_model = models.get_yolo_model(gpus=conf.YOLO_USE_MULTI_GPU)
 yolo_model.summary()
 print('Loading trained weights...')
-yolo_model.load_weights(conf.YOLO_CKPT)
+yolo_model.load_weights(conf.YOLO_CKPT, by_name=True)
 
 print('Generating metadata...')
 imgs_meta  = reader.dataset_filepath(conf.TEST_PATH, get_masks=False)

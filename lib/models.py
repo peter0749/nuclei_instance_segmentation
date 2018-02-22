@@ -5,7 +5,7 @@ import numpy as np
 
 ### Yolo model:
 
-def get_yolo_model():
+def get_yolo_model(gpus=-1):
     import tensorflow as tf
     def space_to_depth_x2(x):
         return tf.space_to_depth(x, block_size=2)
@@ -15,6 +15,7 @@ def get_yolo_model():
     from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
     from keras.optimizers import SGD, Adam, RMSprop
     from keras.layers.merge import concatenate
+    from keras.utils.training_utils import multi_gpu_model
     import keras.backend as K
 
     input_image = Input(shape=(conf.YOLO_DIM, conf.YOLO_DIM, 3))
@@ -148,8 +149,14 @@ def get_yolo_model():
     # small hack to allow true_boxes to be registered when Keras build the model
     # for more information: https://github.com/fchollet/keras/issues/2790
     output = Lambda(lambda args: args[0])([output, true_boxes])
-    model = Model([input_image, true_boxes], output)
     optimizer = Adam(**conf.YOLO_OPT_ARGS)
+    if gpus>0: ## multi-gpu training
+        with tf.device('/cpu:0'): ## prevent OOM error
+            model = Model([input_image, true_boxes], output)
+            model.compile(loss=losses.yolo_loss(true_boxes), optimizer=optimizer)
+        model = multi_gpu_model(model, gpus=gpus) ## get multi-gpu model
+    else:
+        model = Model([input_image, true_boxes], output)
     model.compile(loss=losses.yolo_loss(true_boxes), optimizer=optimizer)
     return model
 ### end Yolo model

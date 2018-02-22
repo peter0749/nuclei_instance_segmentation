@@ -1,11 +1,11 @@
 # ROOT TO DATASET (DATA & TEST)
-DATA_PATH = '/home/peter/stage1_train' # this will split into training/validation
-TEST_PATH = '/home/peter/stage1_test'
+DATA_PATH = '/hdd/dataset/nuclei_dataset/stage1_train' # this will split into training/validation
+TEST_PATH = '/hdd/dataset/nuclei_dataset/stage1_test'
 VALID_SPLIT = 0.1
 
 # U-Net for semantic segmentation
 U_NET_DIM = 64
-U_NET_OUT_DIR = '/home/peter/unet_out'
+U_NET_OUT_DIR = '/hdd/dataset/nuclei_dataset/unet_out'
 
 # YOLO step-by-step ref:
 # https://github.com/experiencor/basic-yolo-keras/blob/master/Yolo%20Step-by-Step.ipynb
@@ -23,16 +23,17 @@ WARM_UP_BATCHES  = 3
 TRUE_BOX_BUFFER  = 50
 BOX = 5
 
-YOLO_BATCH_SIZE=10
+YOLO_USE_MULTI_GPU=2
+YOLO_BATCH_SIZE=60 ## each gpus's batch size = YOLO_BATCH_SIZE / YOLO_USE_MULTI_GPU
 U_NET_BATCH_SIZE=8
-GENERATOR_WORKERS=1
+GENERATOR_WORKERS=4
 
 YOLO_EPOCHS=250
 U_NET_EPOCHS=300
 
-YOLO_CKPT = '/home/peter/yolo.h5'
+YOLO_CKPT = '/hdd/dataset/nuclei_dataset/yolo.h5'
 
-YOLO_TFBOARD_DIR = '/home/peter/yolo_tfboard'
+YOLO_TFBOARD_DIR = '/hdd/dataset/nuclei_dataset/yolo_tfboard'
 YOLO_OPT_ARGS = {
     'lr'              : 1e-4,
     'clipvalue'       : 0.1 ,
@@ -41,7 +42,7 @@ YOLO_OPT_ARGS = {
 YOLO_MIN_LOSS = 0
 YOLO_MAX_LOSS = 10 # This prevent nans. If your loss is not chaning, then set a higher value.
 YOLO_EARLY_STOP = 20
-YOLO_OUT_DIR = '/home/peter/yolo_out'
+YOLO_OUT_DIR = '/hdd/dataset/nuclei_dataset/detection_output'
 
 ### !!! DO NOT EDITING THE CONFIGURATION BELOW !!! ###
 
