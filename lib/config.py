@@ -42,8 +42,6 @@ YOLO_OPT_ARGS = {
 YOLO_MIN_LOSS = 0
 YOLO_MAX_LOSS = 10 # This prevent nans. If your loss is not chaning, then set a higher value.
 
-YOLO_USE_ENTROPY = True # If true, then use binary cross-entropy to compute the loss between true confidence and pred confidence. 
-
 YOLO_EARLY_STOP = 20
 YOLO_OUT_DIR = '/hdd/dataset/nuclei_dataset/detection_output'
 
