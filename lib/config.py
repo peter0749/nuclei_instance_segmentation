@@ -13,7 +13,7 @@ YOLO_DIM = 416
 YOLO_GRID= 13
 YOLO_BOX = 5
 OBJECT_THRESHOLD = 0.3 # <- notice here
-NMS_THRESHOLD = 0.5
+NMS_THRESHOLD = 0.4
 # ANCHORS = [0.57273, 0.677385, 1.87446, 2.06253, 3.33843, 5.47434, 7.88282, 3.52778, 9.77052, 9.16828]
 ANCHORS = [1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52]
 NO_OBJECT_SCALE  = 1.0
@@ -41,6 +41,9 @@ YOLO_OPT_ARGS = {
 }
 YOLO_MIN_LOSS = 0
 YOLO_MAX_LOSS = 10 # This prevent nans. If your loss is not chaning, then set a higher value.
+
+YOLO_USE_ENTROPY = True # If true, then use binary cross-entropy to compute the loss between true confidence and pred confidence. 
+
 YOLO_EARLY_STOP = 20
 YOLO_OUT_DIR = '/hdd/dataset/nuclei_dataset/detection_output'
 
