@@ -22,7 +22,7 @@ train_batch = YOLO_BatchGenerator(train_imgs, conf.yolo_generator_config, norm=n
 valid_batch = YOLO_BatchGenerator(val_imgs, conf.yolo_generator_config, norm=normalize)
 
 early_stop = EarlyStopping(monitor='val_loss',
-                           min_delta=0.001,
+                           min_delta=0.0001,
                            patience=conf.YOLO_EARLY_STOP,
                            mode='min',
                            verbose=1)
@@ -48,5 +48,5 @@ yolo_model.fit_generator(generator        = train_batch,
                     validation_steps = len(valid_batch),
                     callbacks        = [early_stop, checkpoint, tensorboard],
                     max_queue_size   = 3, 
-                    workers = 2)
+                    workers = conf.GENERATOR_WORKERS)
 

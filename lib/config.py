@@ -23,6 +23,7 @@ BOX = 5
 
 YOLO_BATCH_SIZE=10
 U_NET_BATCH_SIZE=8
+GENERATOR_WORKERS=1
 
 YOLO_EPOCHS=250
 U_NET_EPOCHS=300
@@ -34,6 +35,8 @@ YOLO_OPT_ARGS = {
     'lr'              : 1e-4, 
     'clipvalue'       : 0.1 , 
 }
+YOLO_MIN_LOSS = 0
+YOLO_MAX_LOSS = 30 # This prevent nans. If your loss is not chaning, then set a higher value.
 YOLO_EARLY_STOP = 20
 
 ### !!! DO NOT EDITING THE CONFIGURATION BELOW !!! ###
