@@ -1,3 +1,4 @@
+import gc
 import config as conf
 import losses
 import metrics
@@ -152,12 +153,14 @@ def get_yolo_model(gpus=-1):
     optimizer = Adam(**conf.YOLO_OPT_ARGS)
     if gpus>0: ## multi-gpu training
         with tf.device('/cpu:0'): ## prevent OOM error
-            model = Model([input_image, true_boxes], output)
-            model.compile(loss=losses.yolo_loss(true_boxes), optimizer=optimizer)
-        model = multi_gpu_model(model, gpus=gpus) ## get multi-gpu model
+            cpu_model = Model([input_image, true_boxes], output)
+            cpu_model.compile(loss=losses.yolo_loss(true_boxes), optimizer=optimizer)
+        model = multi_gpu_model(cpu_model, gpus=gpus) ## get multi-gpu model
+        del cpu_model
     else:
         model = Model([input_image, true_boxes], output)
     model.compile(loss=losses.yolo_loss(true_boxes), optimizer=optimizer)
+    gc.collect()
     return model
 ### end Yolo model
 
