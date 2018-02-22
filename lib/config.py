@@ -12,8 +12,8 @@ U_NET_OUT_DIR = '/hdd/dataset/nuclei_dataset/unet_out'
 YOLO_DIM = 416
 YOLO_GRID= 13
 YOLO_BOX = 5
-OBJECT_THRESHOLD = 0.25 # <- notice here
-NMS_THRESHOLD = 0.3
+OBJECT_THRESHOLD = 0.2 # <- notice here
+NMS_THRESHOLD = 0.2
 # ANCHORS = [0.57273, 0.677385, 1.87446, 2.06253, 3.33843, 5.47434, 7.88282, 3.52778, 9.77052, 9.16828]
 ANCHORS = [1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52]
 NO_OBJECT_SCALE  = 1.0
@@ -23,7 +23,7 @@ WARM_UP_BATCHES  = 0
 TRUE_BOX_BUFFER  = 50
 BOX = 5
 
-YOLO_DRAW_LINE_W = 2
+YOLO_DRAW_LINE_W = 1
 YOLO_SHOW_CONF = False
 
 YOLO_USE_MULTI_GPU=2
@@ -31,7 +31,7 @@ YOLO_BATCH_SIZE=48 ## each gpus's batch size = YOLO_BATCH_SIZE / YOLO_USE_MULTI_
 U_NET_BATCH_SIZE=8
 GENERATOR_WORKERS=4
 
-YOLO_EPOCHS=250
+YOLO_EPOCHS=500
 U_NET_EPOCHS=300
 
 YOLO_CKPT = '/hdd/dataset/nuclei_dataset/yolo.h5'
@@ -45,7 +45,7 @@ YOLO_OPT_ARGS = {
 YOLO_MIN_LOSS = 0
 YOLO_MAX_LOSS = 10 # This prevent nans. If your loss is not chaning, then set a higher value.
 
-YOLO_EARLY_STOP = 20
+YOLO_EARLY_STOP = 50
 YOLO_OUT_DIR = '/hdd/dataset/nuclei_dataset/detection_output'
 
 ### !!! DO NOT EDITING THE CONFIGURATION BELOW !!! ###
