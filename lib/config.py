@@ -5,6 +5,7 @@ VALID_SPLIT = 0.1
 
 # U-Net for semantic segmentation
 U_NET_DIM = 64
+U_NET_OUT_DIR = '/home/peter/unet_out'
 
 # YOLO step-by-step ref:
 # https://github.com/experiencor/basic-yolo-keras/blob/master/Yolo%20Step-by-Step.ipynb
@@ -32,13 +33,14 @@ YOLO_CKPT = '/home/peter/yolo.h5'
 
 YOLO_TFBOARD_DIR = '/home/peter/yolo_tfboard'
 YOLO_OPT_ARGS = {
-    'lr'              : 1e-4, 
-    'clipvalue'       : 0.1 , 
+    'lr'              : 1e-4,
+    'clipvalue'       : 0.1 ,
     'clipnorm'        : 1.0 ,
 }
 YOLO_MIN_LOSS = 0
 YOLO_MAX_LOSS = 10 # This prevent nans. If your loss is not chaning, then set a higher value.
 YOLO_EARLY_STOP = 20
+YOLO_OUT_DIR = '/home/peter/yolo_out'
 
 ### !!! DO NOT EDITING THE CONFIGURATION BELOW !!! ###
 
