@@ -145,6 +145,7 @@ class YOLO_BatchGenerator(Sequence):
     def aug_image(self, train_instance, jitter):
         image_name = train_instance['image']
         image = cv2.imread(image_name, cv2.IMREAD_COLOR)[...,:3]
+        image = image[...,::-1] ## BGR -> RGB
 
         if image is None: print('Cannot find ' + str(image_name))
 

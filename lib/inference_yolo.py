@@ -14,6 +14,7 @@ import config as conf
 from sklearn.model_selection import train_test_split
 from generators import YOLO_BatchGenerator
 from utils import decode_netout, draw_boxes
+import cv2
 
 yolo_model = models.get_yolo_model()
 yolo_model.summary()
