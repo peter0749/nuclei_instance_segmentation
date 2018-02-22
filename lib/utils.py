@@ -1,4 +1,5 @@
 import os
+import copy
 import tensorflow as tf
 import copy
 import cv2
@@ -65,7 +66,8 @@ def bbox_iou(box1, box2):
 
     return float(intersect) / union
 
-def draw_boxes(image, boxes):
+def draw_boxes(image_, boxes):
+    image = copy.deepcopy(image_)
     for box in boxes:
         xmin  = int((box.x - box.w/2) * image.shape[1])
         xmax  = int((box.x + box.w/2) * image.shape[1])
