@@ -1,3 +1,4 @@
+import os
 import gc
 import config as conf
 import losses
@@ -154,7 +155,7 @@ def get_yolo_model(gpus=1, load_weights=None):
     with tf.device('/cpu:0'): ## prevent OOM error
         cpu_model = Model([input_image, true_boxes], output)
         cpu_model.compile(loss=losses.yolo_loss(true_boxes), optimizer=optimizer)
-        if load_weights is not None:
+        if load_weights is not None and os.path.exists(load_weights):
             cpu_model.load_weights(load_weights)
     if gpus>=2:
         gpu_model = multi_gpu_model(cpu_model, gpus=gpus)
@@ -281,7 +282,7 @@ def get_U_Net_model(gpus=1, load_weights=None):
     with tf.device('/cpu:0'): ## prevent OOM error
         cpu_model = Model(inputs=[inputs], outputs=[outputs])
         cpu_model.compile(loss=losses.unet_loss, metrics=[metrics.mean_iou], optimizer=optimizer)
-        if load_weights is not None:
+        if load_weights is not None and os.path.exists(load_weights):
             cpu_model.load_weights(load_weights)
     if gpus>=2:
         gpu_model = multi_gpu_model(cpu_model, gpus=gpus)

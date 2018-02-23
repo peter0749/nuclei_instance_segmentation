@@ -34,8 +34,8 @@ U_NET_BATCH_SIZE=64
 
 GENERATOR_WORKERS=10
 
-YOLO_EPOCHS=500
-U_NET_EPOCHS=300
+YOLO_EPOCHS=300
+U_NET_EPOCHS=100
 
 YOLO_CKPT = '/hdd/dataset/nuclei_dataset/yolo.h5'
 U_NET_CKPT = '/hdd/dataset/nuclei_dataset/unet.h5'
