@@ -283,13 +283,13 @@ class U_NET_BatchGenerator(Sequence):
 
         if jitter:
             croph, cropw = np.random.uniform(0.9, 1.1)*(ymax-ymin), np.random.uniform(0.9, 1.1)*(xmax-xmin) ## random scale
-            xmin = int(np.random.uniform(-0.1, 0.1) * cropw) + xmin ## random crop
-            ymin = int(np.random.uniform(-0.1, 0.1) * croph) + ymin
+            xmin = np.random.uniform(-0.1, 0.1) * cropw + xmin ## random crop
+            ymin = np.random.uniform(-0.1, 0.1) * croph + ymin
             xmax = xmin+cropw
             ymax = ymin+croph
 
-        image = image[ymin:ymax, xmin:xmax]
-        mask  =  mask[ymin:ymax, xmin:xmax]
+        image = image[int(ymin):int(ymax), int(xmin):int(xmax)]
+        mask  =  mask[int(ymin):int(ymax), int(xmin):int(xmax)]
 
         h, w, c = image.shape
 
