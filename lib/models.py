@@ -173,6 +173,8 @@ def get_U_Net_model(gpus=-1):
     from keras.layers.pooling import MaxPooling2D
     from keras.layers.merge import concatenate
     from keras.callbacks import EarlyStopping, ModelCheckpoint
+    from keras.optimizers import SGD, Adam, RMSprop
+    from keras.utils.training_utils import multi_gpu_model
     from keras import backend as K
     import tensorflow as tf
 
@@ -278,7 +280,7 @@ def get_U_Net_model(gpus=-1):
     c11 = _res_conv(c11, 32, 3)
 
     outputs = Conv2D(2, (1, 1), activation='sigmoid') (c11)
-    optimizer = Adam(**conf.UNET_OPT_ARGS)
+    optimizer = Adam(**conf.U_NET_OPT_ARGS)
     if gpus>0: ## multi-gpu training
         with tf.device('/cpu:0'): ## prevent OOM error
             cpu_model = Model(inputs=[inputs], outputs=[outputs])
