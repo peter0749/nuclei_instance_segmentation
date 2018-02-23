@@ -69,5 +69,5 @@ for i, netout in tqdm(enumerate(netouts), total=len(netouts)):
         ### pass
         ###    end RLE   ###
         cv2.imwrite(os.path.join(conf.U_NET_OUT_DIR, filename+'_%d'%j), (mask*255.).astype(np.uint8))
-    cv2.imwrite(os.path.join(conf.YOLO_OUT_DIR, filename), image.astype(np.uint8)[::-1]) # RGB -> BGR
+    cv2.imwrite(os.path.join(conf.YOLO_OUT_DIR, filename), image.astype(np.uint8)[...,::-1]) # RGB -> BGR
 
