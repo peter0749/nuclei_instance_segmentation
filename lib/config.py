@@ -5,7 +5,6 @@ VALID_SPLIT = 0.1
 
 # U-Net for semantic segmentation
 U_NET_DIM = 64
-U_NET_OUT_DIR = '/hdd/dataset/nuclei_dataset/unet_out'
 
 # YOLO step-by-step ref:
 # https://github.com/experiencor/basic-yolo-keras/blob/master/Yolo%20Step-by-Step.ipynb
@@ -59,7 +58,7 @@ YOLO_EARLY_STOP = 50
 U_NET_EARLY_STOP = 50
 
 YOLO_OUT_DIR = '/hdd/dataset/nuclei_dataset/detection_output'
-U_NET_OUT_DIR = '/hdd/dataset/nuclei_dataset/detection_output'
+U_NET_OUT_DIR = '/hdd/dataset/nuclei_dataset/unet_out'
 
 ### !!! DO NOT EDITING THE CONFIGURATION BELOW !!! ###
 
