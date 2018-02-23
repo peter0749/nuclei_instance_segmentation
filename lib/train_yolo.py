@@ -11,7 +11,7 @@ from sklearn.model_selection import train_test_split
 from utils import normalize, multi_gpu_ckpt
 from generators import YOLO_BatchGenerator
 
-yolo_model, base_model = models.get_yolo_model(gpus=conf.YOLO_USE_MULTI_GPU)
+yolo_model, base_model = models.get_yolo_model(gpus=conf.YOLO_USE_MULTI_GPU, load_weights=conf.YOLO_CKPT)
 yolo_model.summary()
 
 print('Generating metadata...')
