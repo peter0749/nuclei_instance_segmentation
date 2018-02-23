@@ -282,9 +282,10 @@ class U_NET_BatchGenerator(Sequence):
         xmin, xmax = train_instance['xmin'], train_instance['xmax']
 
         if jitter:
-            croph, cropw = np.random.uniform(0.9, 1.1)*(ymax-ymin), np.random.uniform(0.9, 1.1)*(xmax-xmin) ## random scale
-            xmin = np.random.uniform(-0.1, 0.1) * cropw + xmin ## random crop
-            ymin = np.random.uniform(-0.1, 0.1) * croph + ymin
+            min_size = 3
+            croph, cropw = max(min_size, np.random.uniform(0.9, 1.1)*(ymax-ymin)), max(min_size, np.random.uniform(0.9, 1.1)*(xmax-xmin)) ## random scale
+            xmin = np.clip(np.random.uniform(-0.1, 0.1) * cropw + xmin, 0, image.shape[1]-min_size) ## random crop
+            ymin = np.clip(np.random.uniform(-0.1, 0.1) * croph + ymin, 0, image.shape[0]-min_size)
             xmax = xmin+cropw
             ymax = ymin+croph
 
@@ -300,7 +301,7 @@ class U_NET_BatchGenerator(Sequence):
 
         # resize the image to standard size
         image = cv2.resize(image, (self.config['IMAGE_H'], self.config['IMAGE_W'])) # shape: (IMAGE_H, IMAGE_W, 3)
-        mask  = cv2.resize(np.squeeze(mask) , (self.config['IMAGE_H'], self.config['IMAGE_W'])) # shape: (IMAGE_H, IMAGE_W)
+        mask  = (cv2.resize(np.squeeze(mask) , (self.config['IMAGE_H'], self.config['IMAGE_W']))>128).astype(np.float32) # shape: (IMAGE_H, IMAGE_W)
 
         return image, mask
 ### end U-Net generator ###
