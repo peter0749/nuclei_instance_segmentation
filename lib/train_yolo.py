@@ -8,10 +8,10 @@ import models
 import reader
 import config as conf
 from sklearn.model_selection import train_test_split
-from utils import normalize
+from utils import normalize, multi_gpu_ckpt
 from generators import YOLO_BatchGenerator
 
-yolo_model = models.get_yolo_model(gpus=conf.YOLO_USE_MULTI_GPU)
+yolo_model, base_model = models.get_yolo_model(gpus=conf.YOLO_USE_MULTI_GPU)
 yolo_model.summary()
 
 print('Generating metadata...')
@@ -27,7 +27,8 @@ early_stop = EarlyStopping(monitor='val_loss',
                            mode='min',
                            verbose=1)
 
-checkpoint = ModelCheckpoint(conf.YOLO_CKPT,
+checkpoint = multi_gpu_ckpt( conf.YOLO_CKPT,
+                             base_model,
                              monitor='val_loss',
                              verbose=1,
                              save_best_only=True,

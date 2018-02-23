@@ -6,7 +6,7 @@ import numpy as np
 
 ### Yolo model:
 
-def get_yolo_model(gpus=1):
+def get_yolo_model(gpus=1, load_weights=None):
     import tensorflow as tf
     def space_to_depth_x2(x):
         return tf.space_to_depth(x, block_size=2)
@@ -151,21 +151,20 @@ def get_yolo_model(gpus=1):
     # for more information: https://github.com/fchollet/keras/issues/2790
     output = Lambda(lambda args: args[0])([output, true_boxes])
     optimizer = Adam(**conf.YOLO_OPT_ARGS)
+    with tf.device('/cpu:0'): ## prevent OOM error
+        cpu_model = Model([input_image, true_boxes], output)
+        cpu_model.compile(loss=losses.yolo_loss(true_boxes), optimizer=optimizer)
+        if load_weights is not None:
+            cpu_model.load_weights(load_weights)
     if gpus>=2:
-        with tf.device('/cpu:0'): ## prevent OOM error
-            cpu_model = Model([input_image, true_boxes], output)
-            cpu_model.compile(loss=losses.yolo_loss(true_boxes), optimizer=optimizer)
-        model = multi_gpu_model(cpu_model, gpus=gpus) ## get multi-gpu model
-        del cpu_model
-    else:
-        model = Model([input_image, true_boxes], output)
-    model.compile(loss=losses.yolo_loss(true_boxes), optimizer=optimizer)
-    gc.collect()
-    return model
+        gpu_model = multi_gpu_model(cpu_model, gpus=gpus)
+        gpu_model.compile(loss=losses.yolo_loss(true_boxes), optimizer=optimizer)
+        return gpu_model, cpu_model
+    return cpu_model, cpu_model
 ### end Yolo model
 
 ### U-Net:
-def get_U_Net_model(gpus=1):
+def get_U_Net_model(gpus=1, load_weights=None):
     from keras.models import Model, load_model
     from keras.layers import Input, Add, Activation
     from keras.layers.core import Dropout, Lambda
@@ -279,15 +278,14 @@ def get_U_Net_model(gpus=1):
 
     outputs = Conv2D(1, (1, 1), activation='sigmoid') (c11)
     optimizer = Adam(**conf.U_NET_OPT_ARGS)
+    with tf.device('/cpu:0'): ## prevent OOM error
+        cpu_model = Model(inputs=[inputs], outputs=[outputs])
+        cpu_model.compile(loss=losses.unet_loss, metrics=[metrics.mean_iou], optimizer=optimizer)
+        if load_weights is not None:
+            cpu_model.load_weights(load_weights)
     if gpus>=2:
-        with tf.device('/cpu:0'): ## prevent OOM error
-            cpu_model = Model(inputs=[inputs], outputs=[outputs])
-            cpu_model.compile(loss=losses.unet_loss, metrics=[metrics.mean_iou], optimizer=optimizer)
-        model = multi_gpu_model(cpu_model, gpus=gpus) ## get multi-gpu model
-        del cpu_model
-    else:
-        model = Model(inputs=[inputs], outputs=[outputs])
-    model.compile(loss=losses.unet_loss, metrics=[metrics.mean_iou], optimizer=optimizer)
-    gc.collect()
-    return model
+        gpu_model = multi_gpu_model(cpu_model, gpus=gpus)
+        gpu_model.compile(loss=losses.unet_loss, metrics=[metrics.mean_iou], optimizer=optimizer)
+        return gpu_model, cpu_model
+    return cpu_model, cpu_model
 ### end U-Net model

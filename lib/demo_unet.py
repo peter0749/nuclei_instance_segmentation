@@ -15,10 +15,9 @@ from utils import normalize
 from generators import U_NET_BatchGenerator
 import cv2
 
-unet_model = models.get_U_Net_model(gpus=conf.U_NET_USE_MULTI_GPU)
-unet_model.summary()
 print('Loading trained weights...')
-unet_model.load_weights(conf.U_NET_CKPT)
+unet_model, _ = models.get_U_Net_model(gpus=conf.U_NET_USE_MULTI_GPU, load_weights=conf.U_NET_CKPT)
+unet_model.summary()
 
 print('Generating metadata...')
 train_imgs = reader.dataset_filepath(conf.DATA_PATH)
