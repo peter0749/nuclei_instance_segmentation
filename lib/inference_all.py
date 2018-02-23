@@ -56,8 +56,6 @@ for i, netout in tqdm(enumerate(netouts), total=len(netouts)):
     imgcrops = np.array(imgcrops, dtype=np.float32) / 255. # a batch of images
     preds = unet_model.predict(imgcrops, batch_size=conf.U_NET_BATCH_SIZE)
 
-    image = draw_boxes(image, boxes)
-
     _, filename = os.path.split(imgs_path[i])
     for j, pred in enumerate(preds):
         (xmin,xmax,ymin,ymax) = regions[j]
@@ -69,5 +67,6 @@ for i, netout in tqdm(enumerate(netouts), total=len(netouts)):
         ### pass
         ###    end RLE   ###
         cv2.imwrite(os.path.join(conf.U_NET_OUT_DIR, filename+'_%d'%j), (mask*255.).astype(np.uint8))
+    image = draw_boxes(image, boxes)
     cv2.imwrite(os.path.join(conf.YOLO_OUT_DIR, filename), image.astype(np.uint8)[...,::-1]) # RGB -> BGR
 
