@@ -165,7 +165,7 @@ def get_yolo_model(gpus=-1):
 ### end Yolo model
 
 ### U-Net:
-def get_U_Net_model():
+def get_U_Net_model(gpus=-1):
     from keras.models import Model, load_model
     from keras.layers import Input, Add, Activation
     from keras.layers.core import Dropout, Lambda
@@ -278,7 +278,16 @@ def get_U_Net_model():
     c11 = _res_conv(c11, 32, 3)
 
     outputs = Conv2D(2, (1, 1), activation='sigmoid') (c11)
-    model = Model(inputs=[inputs], outputs=[outputs])
-    model.compile(loss=losses.unet_loss, metrics=[metrics.mean_iou, metrics.mean_iou_marker], optimizer='adam')
+    optimizer = Adam(**conf.UNET_OPT_ARGS)
+    if gpus>0: ## multi-gpu training
+        with tf.device('/cpu:0'): ## prevent OOM error
+            cpu_model = Model(inputs=[inputs], outputs=[outputs])
+            cpu_model.compile(loss=losses.unet_loss, metrics=[metrics.mean_iou, metrics.mean_iou_marker], optimizer=optimizer)
+        model = multi_gpu_model(cpu_model, gpus=gpus) ## get multi-gpu model
+        del cpu_model
+    else:
+        model = Model(inputs=[inputs], outputs=[outputs])
+    model.compile(loss=losses.unet_loss, metrics=[metrics.mean_iou, metrics.mean_iou_marker], optimizer=optimizer)
+    gc.collect()
     return model
 ### end U-Net model
