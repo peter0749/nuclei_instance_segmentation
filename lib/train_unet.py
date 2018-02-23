@@ -11,7 +11,7 @@ from sklearn.model_selection import train_test_split
 from utils import normalize, multi_gpu_ckpt
 from generators import U_NET_BatchGenerator
 
-unet_model, base_model = models.get_U_Net_model(gpus=conf.U_NET_USE_MULTI_GPU, load_weights=conf.U_NET_CKPT)
+unet_model, base_model = models.get_U_Net_model(gpus=conf.U_NET_USE_MULTI_GPU, load_weights=conf.U_NET_CKPT, verbose=True)
 unet_model.summary()
 
 print('Generating metadata...')

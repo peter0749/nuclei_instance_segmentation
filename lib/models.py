@@ -7,7 +7,7 @@ import numpy as np
 
 ### Yolo model:
 
-def get_yolo_model(gpus=1, load_weights=None):
+def get_yolo_model(gpus=1, load_weights=None, verbose=False):
     import tensorflow as tf
     def space_to_depth_x2(x):
         return tf.space_to_depth(x, block_size=2)
@@ -157,6 +157,8 @@ def get_yolo_model(gpus=1, load_weights=None):
         cpu_model.compile(loss=losses.yolo_loss(true_boxes), optimizer=optimizer)
         if load_weights is not None and os.path.exists(load_weights):
             cpu_model.load_weights(load_weights)
+            if verbose:
+                print('Loaded weights')
     if gpus>=2:
         gpu_model = multi_gpu_model(cpu_model, gpus=gpus)
         gpu_model.compile(loss=losses.yolo_loss(true_boxes), optimizer=optimizer)
@@ -165,7 +167,7 @@ def get_yolo_model(gpus=1, load_weights=None):
 ### end Yolo model
 
 ### U-Net:
-def get_U_Net_model(gpus=1, load_weights=None):
+def get_U_Net_model(gpus=1, load_weights=None, verbose=False):
     from keras.models import Model, load_model
     from keras.layers import Input, Add, Activation
     from keras.layers.core import Dropout, Lambda
@@ -284,6 +286,8 @@ def get_U_Net_model(gpus=1, load_weights=None):
         cpu_model.compile(loss=losses.unet_loss, metrics=[metrics.mean_iou], optimizer=optimizer)
         if load_weights is not None and os.path.exists(load_weights):
             cpu_model.load_weights(load_weights)
+            if verbose:
+                print('Loaded weights')
     if gpus>=2:
         gpu_model = multi_gpu_model(cpu_model, gpus=gpus)
         gpu_model.compile(loss=losses.unet_loss, metrics=[metrics.mean_iou], optimizer=optimizer)
