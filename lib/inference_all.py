@@ -46,17 +46,21 @@ for i, netout in tqdm(enumerate(netouts), total=len(netouts)):
         ymax  = int((box.y + box.h/2) * image.shape[0])
         regions.append((xmin,xmax,ymin,ymax))
         imgcrops.append(cv2.resize(image[ymin:ymax, xmin:xmax], (conf.U_NET_DIM, conf.U_NET_DIM)))
-    imgcrops = np.array(imgcrops) # a batch of images
+    imgcrops = np.array(imgcrops, dtype=np.float32) / 255. # a batch of images
     preds = unet_model.predict(imgcrops, batch_size=conf.U_NET_BATCH_SIZE)
+
+    image = draw_boxes(image, boxes)
 
     _, filename = os.path.split(imgs_path[i])
     for j, pred in enumerate(preds):
         (xmin,xmax,ymin,ymax) = regions[j]
-        mask = np.zeros(*image.shape[:2])
+        mask = np.zeros(*image.shape[:2], dtype=np.bool)
         resized_pred = cv2.resize(np.squeeze(pred), (xmax-xmin, ymax-ymin))
         mask[ymin:ymax, xmin:xmax] = (resized_pred>conf.U_NET_THRESHOLD)
+        image[mask, :3] = 255, 0, 0 # R, G, B
         ### run RLE here ###
         ### pass
         ###    end RLE   ###
         cv2.write(os.path.join(conf.U_NET_OUT_DIR, filename+'_%d'%j), (mask*255.).astype(np.uint8))
+    cv2.write(os.path.join(conf.YOLO_OUT_DIR, filename), image.astype(np.uint8))
 
