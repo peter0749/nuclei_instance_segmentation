@@ -68,7 +68,7 @@ def bbox_iou(box1, box2):
 
     return float(intersect) / union
 
-def draw_boxes(image_, boxes):
+def draw_boxes(image_, boxes): ## channel order: RGB / BGR
     image = copy.deepcopy(image_)
     for box in boxes:
         xmin  = int((box.x - box.w/2) * image.shape[1])

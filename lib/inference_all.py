@@ -1,4 +1,5 @@
 import os
+import copy
 import numpy as np
 from tqdm import tqdm
 import gc
@@ -31,6 +32,11 @@ netouts = yolo_model.predict([imgs_batch, np.zeros((len(imgs_batch), 1, 1, 1, co
 del imgs_batch
 gc.collect() # release memory
 
+if not os.path.exists(conf.U_NET_OUT_DIR):
+    os.makedirs(conf.U_NET_OUT_DIR)
+if not os.path.exists(conf.YOLO_OUT_DIR):
+    os.makedirs(conf.YOLO_OUT_DIR)
+
 for i, netout in tqdm(enumerate(netouts), total=len(netouts)):
     boxes = decode_netout(netout,
                       obj_threshold=conf.OBJECT_THRESHOLD,
@@ -40,10 +46,11 @@ for i, netout in tqdm(enumerate(netouts), total=len(netouts)):
     imgcrops = []
     regions  = []
     for box in boxes:
-        xmin  = int((box.x - box.w/2) * image.shape[1])
-        xmax  = int((box.x + box.w/2) * image.shape[1])
-        ymin  = int((box.y - box.h/2) * image.shape[0])
-        ymax  = int((box.y + box.h/2) * image.shape[0])
+        xmax  = np.clip(int((box.x + box.w/2) * image.shape[1]), 3, image.shape[1])
+        xmin  = np.clip(int((box.x - box.w/2) * image.shape[1]), 0, xmax-3)
+        ymax  = np.clip(int((box.y + box.h/2) * image.shape[0]), 3, image.shape[0])
+        ymin  = np.clip(int((box.y - box.h/2) * image.shape[0]), 0, ymax-3)
+
         regions.append((xmin,xmax,ymin,ymax))
         imgcrops.append(cv2.resize(image[ymin:ymax, xmin:xmax], (conf.U_NET_DIM, conf.U_NET_DIM)))
     imgcrops = np.array(imgcrops, dtype=np.float32) / 255. # a batch of images
@@ -54,13 +61,13 @@ for i, netout in tqdm(enumerate(netouts), total=len(netouts)):
     _, filename = os.path.split(imgs_path[i])
     for j, pred in enumerate(preds):
         (xmin,xmax,ymin,ymax) = regions[j]
-        mask = np.zeros(*image.shape[:2], dtype=np.bool)
+        mask = np.zeros(image.shape[:2], dtype=np.bool)
         resized_pred = cv2.resize(np.squeeze(pred), (xmax-xmin, ymax-ymin))
         mask[ymin:ymax, xmin:xmax] = (resized_pred>conf.U_NET_THRESHOLD)
         image[mask, :3] = 255, 0, 0 # R, G, B
         ### run RLE here ###
         ### pass
         ###    end RLE   ###
-        cv2.write(os.path.join(conf.U_NET_OUT_DIR, filename+'_%d'%j), (mask*255.).astype(np.uint8))
-    cv2.write(os.path.join(conf.YOLO_OUT_DIR, filename), image.astype(np.uint8))
+        cv2.imwrite(os.path.join(conf.U_NET_OUT_DIR, filename+'_%d'%j), (mask*255.).astype(np.uint8))
+    cv2.imwrite(os.path.join(conf.YOLO_OUT_DIR, filename), image.astype(np.uint8)[::-1]) # RGB -> BGR
 
