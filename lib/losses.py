@@ -3,22 +3,10 @@ import numpy as np
 import tensorflow as tf
 import keras.backend as K
 
-def unet_loss(y_true_, y_pred_):
+def unet_loss(y_true, y_pred):
     from keras.losses import binary_crossentropy
     from metrics import dice_coef
-    alpha = 0.83 # control amount of loss of markers
-
-    y_true_hm = y_true_[...,0]
-    y_true_mk = y_true_[...,1]
-
-    y_pred_hm = y_pred_[...,0]
-    y_pred_mk = y_pred_[...,1]
-
-    s_marker_loss = .5 * binary_crossentropy(y_true_mk, y_pred_mk) - dice_coef(y_true_mk, y_pred_mk)
-    s_heatmap_loss= .5 * binary_crossentropy(y_true_hm, y_pred_hm) - dice_coef(y_true_hm, y_pred_hm)
-
-    losses = alpha * s_marker_loss + (1.-alpha) * s_heatmap_loss
-    return losses
+    return .5 * binary_crossentropy(y_true, y_pred) - dice_coef(y_true, y_pred)
 
 def yolo_loss(true_boxes):
     def func(y_true, y_pred):

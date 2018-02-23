@@ -229,9 +229,7 @@ def get_U_Net_model(gpus=-1):
 
     inputs = Input((IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS))
 
-    c1 = Lambda(lambda x: x / 255) (inputs) # 1st stage input, an image
-
-    c1 = _res_conv(c1, 32, 3)
+    c1 = _res_conv(inputs, 32, 3)
     c1 = _res_conv(c1, 32, 3)
     p1 = pool() (c1)
 
@@ -279,17 +277,17 @@ def get_U_Net_model(gpus=-1):
     c11 = _res_conv(c11, 32, 3)
     c11 = _res_conv(c11, 32, 3)
 
-    outputs = Conv2D(2, (1, 1), activation='sigmoid') (c11)
+    outputs = Conv2D(1, (1, 1), activation='sigmoid') (c11)
     optimizer = Adam(**conf.U_NET_OPT_ARGS)
     if gpus>0: ## multi-gpu training
         with tf.device('/cpu:0'): ## prevent OOM error
             cpu_model = Model(inputs=[inputs], outputs=[outputs])
-            cpu_model.compile(loss=losses.unet_loss, metrics=[metrics.mean_iou, metrics.mean_iou_marker], optimizer=optimizer)
+            cpu_model.compile(loss=losses.unet_loss, metrics=[metrics.mean_iou], optimizer=optimizer)
         model = multi_gpu_model(cpu_model, gpus=gpus) ## get multi-gpu model
         del cpu_model
     else:
         model = Model(inputs=[inputs], outputs=[outputs])
-    model.compile(loss=losses.unet_loss, metrics=[metrics.mean_iou, metrics.mean_iou_marker], optimizer=optimizer)
+    model.compile(loss=losses.unet_loss, metrics=[metrics.mean_iou], optimizer=optimizer)
     gc.collect()
     return model
 ### end U-Net model
