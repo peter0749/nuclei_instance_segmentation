@@ -156,7 +156,7 @@ def get_yolo_model(gpus=1, load_weights=None, verbose=False):
     with tf.device('/cpu:0'): ## prevent OOM error
         cpu_model = Model([input_image, true_boxes], output)
         cpu_model.compile(loss=losses.yolo_loss(true_boxes), optimizer=optimizer)
-        if os.path.exists(conf.YOLO_PRETRAINED): # load yolo pretrained weights
+        if conf.YOLO_PRETRAINED is not None and os.path.exists(conf.YOLO_PRETRAINED): # load yolo pretrained weights
             weight_reader = WeightReader(conf.YOLO_PRETRAINED)
             weight_reader.reset()
             nb_conv = 23

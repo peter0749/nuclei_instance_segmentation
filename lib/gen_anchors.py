@@ -14,6 +14,13 @@ argparser.add_argument(
     default=5,
     help='number of anchors to use')
 
+argparser.add_argument(
+    '-t',
+    '--times',
+    type=int,
+    default=3,
+    help='number of times to run')
+
 def IOU(ann, centroids):
     w, h = ann
     similarities = []
@@ -97,6 +104,7 @@ def run_kmeans(ann_dims, anchor_num):
 
 def main(argv):
     num_anchors = args.anchors
+    num_times   = args.times
 
     train_imgs = dataset_filepath(conf.DATA_PATH, get_masks=True)
 
@@ -116,11 +124,11 @@ def main(argv):
     annotation_dims = np.array(annotation_dims)
     print(annotation_dims.shape)
 
-    centroids = run_kmeans(annotation_dims, num_anchors)
-
-    # write anchors to file
-    print('\naverage IOU for', num_anchors, 'anchors:', '%0.2f' % avg_IOU(annotation_dims, centroids))
-    print_anchors(centroids)
+    for _ in range(num_times):
+        centroids = run_kmeans(annotation_dims, num_anchors)
+        # print anchors 
+        print('\naverage IOU for', num_anchors, 'anchors:', '%0.4f' % avg_IOU(annotation_dims, centroids))
+        print_anchors(centroids)
 
 if __name__ == '__main__':
     args = argparser.parse_args()
