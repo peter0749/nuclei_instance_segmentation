@@ -15,7 +15,7 @@ def yolo_loss(true_boxes):
         cell_x = tf.to_float(tf.reshape(tf.tile(tf.range(conf.YOLO_GRID), [conf.YOLO_GRID]), (1, conf.YOLO_GRID, conf.YOLO_GRID, 1, 1)))
         cell_y = tf.transpose(cell_x, (0,2,1,3,4))
 
-        cell_grid = tf.tile(tf.concat([cell_x,cell_y], -1), [conf.YOLO_BATCH_SIZE, 1, 1, 5, 1])
+        cell_grid = tf.tile(tf.concat([cell_x,cell_y], -1), [conf.YOLO_BATCH_SIZE, 1, 1, conf.BOX, 1])
 
         coord_mask = tf.zeros(mask_shape)
         conf_mask  = tf.zeros(mask_shape)
