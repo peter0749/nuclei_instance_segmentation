@@ -19,10 +19,10 @@ from utils import decode_netout, draw_boxes, rle_encoding, get_rles
 import cv2
 
 print('Loading trained weights...')
-yolo_model, _ = models.get_yolo_model(gpus=conf.YOLO_USE_MULTI_GPU, load_weights=conf.YOLO_CKPT)
+yolo_model, _ = models.get_yolo_model(gpus=1, load_weights=conf.YOLO_CKPT)
 yolo_model.summary()
 
-unet_model, _ = models.get_U_Net_model(gpus=conf.U_NET_USE_MULTI_GPU, load_weights=conf.U_NET_CKPT)
+unet_model, _ = models.get_U_Net_model(gpus=1, load_weights=conf.U_NET_CKPT)
 unet_model.summary()
 
 print('Generating metadata...')
