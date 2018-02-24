@@ -194,7 +194,8 @@ def get_yolo_model(gpus=1, load_weights=None, verbose=False):
             new_bias   = np.random.normal(size=weights[1].shape)/(conf.YOLO_GRID*conf.YOLO_GRID)
             layer.set_weights([new_kernel, new_bias])
 
-            print('Loaded pretrained YOLO weights')
+            if verbose:
+                print('Loaded pretrained YOLO weights')
 
         if load_weights is not None and os.path.exists(load_weights):
             cpu_model.load_weights(load_weights)

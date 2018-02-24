@@ -17,7 +17,7 @@ from utils import decode_netout, draw_boxes
 import cv2
 
 print('Loading trained weights...')
-yolo_model, _ = models.get_yolo_model(gpus=conf.YOLO_USE_MULTI_GPU, load_weights=conf.YOLO_CKPT)
+yolo_model, _ = models.get_yolo_model(gpus=1, load_weights=conf.YOLO_CKPT)
 yolo_model.summary()
 
 print('Generating metadata...')
