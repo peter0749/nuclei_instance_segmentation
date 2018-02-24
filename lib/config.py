@@ -10,9 +10,9 @@ U_NET_DIM = 64
 # YOLO step-by-step ref:
 # https://github.com/experiencor/basic-yolo-keras/blob/master/Yolo%20Step-by-Step.ipynb
 YOLO_DIM = 608 ## must be integer (odd number) * 32. 
-OBJECT_THRESHOLD = 0.35 # <- notice here
+OBJECT_THRESHOLD = 0.3 # <- notice here
 NMS_THRESHOLD = 0.1 # less overlapping
-U_NET_THRESHOLD = 0.6
+U_NET_THRESHOLD = 0.5
 ANCHORS = [0.29,0.42, 0.72,1.23, 0.73,0.72, 1.20,1.07, 1.61,1.86, 2.97,3.00] # from gen_anchorbox.py, 6 anchorboxes
 NO_OBJECT_SCALE  = 1.0
 OBJECT_SCALE     = 10.0
@@ -26,7 +26,7 @@ YOLO_SHOW_CONF = False
 YOLO_USE_MULTI_GPU=2
 U_NET_USE_MULTI_GPU=2
 
-YOLO_BATCH_SIZE=20 ## each gpus's batch size = YOLO_BATCH_SIZE / YOLO_USE_MULTI_GPU
+YOLO_BATCH_SIZE=16 ## each gpus's batch size = YOLO_BATCH_SIZE / YOLO_USE_MULTI_GPU
 U_NET_BATCH_SIZE=32
 
 GENERATOR_WORKERS=5
