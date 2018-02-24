@@ -218,3 +218,15 @@ def get_rles(lab_img, cutoff=0.5):
     for i in range(1, lab_img.max() + 1):
         yield rle_encoding(lab_img == i)
 
+# reference from basic-yolo-keras (https://github.com/experiencor/basic-yolo-keras/blob/master/utils.py)
+class WeightReader:
+    def __init__(self, weight_file):
+        self.offset = 4
+        self.all_weights = np.fromfile(weight_file, dtype='float32')
+
+    def read_bytes(self, size):
+        self.offset = self.offset + size
+        return self.all_weights[self.offset-size:self.offset]
+
+    def reset(self):
+        self.offset = 4
