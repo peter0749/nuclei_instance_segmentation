@@ -34,8 +34,8 @@ U_NET_BATCH_SIZE=32
 
 GENERATOR_WORKERS=10
 
-YOLO_EPOCHS=300
-U_NET_EPOCHS=100
+YOLO_EPOCHS=400
+U_NET_EPOCHS=200
 
 YOLO_CKPT = '/hdd/dataset/nuclei_dataset/yolo.h5'
 YOLO_PRETRAINED = '/hdd/dataset/nuclei_dataset/yolo-voc.weights'
