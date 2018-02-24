@@ -46,7 +46,7 @@ U_NET_CKPT = '/hdd/dataset/nuclei_dataset/unet.h5'
 YOLO_TFBOARD_DIR = '/hdd/dataset/nuclei_dataset/yolo_tfboard'
 U_NET_TFBOARD_DIR = '/hdd/dataset/nuclei_dataset/unet_tfboard'
 YOLO_OPT_ARGS = {
-    'lr'              : 2e-4,
+    'lr'              : 1e-5,
     'clipvalue'       : 0.1 ,
     'clipnorm'        : 1.0 ,
 }
