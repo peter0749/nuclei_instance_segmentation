@@ -67,7 +67,7 @@ for i, netout in tqdm(enumerate(netouts), total=len(netouts)):
         mask = np.zeros(image.shape[:2], dtype=np.bool)
         resized_pred = cv2.resize(np.squeeze(preds[j]), (xmax-xmin, ymax-ymin))
         mask[ymin:ymax, xmin:xmax] = (resized_pred>conf.U_NET_THRESHOLD)
-        labels[mask] = j
+        labels[mask] = j+1
         image[mask, :3] = 255, 0, 0 # R, G, B
         #cv2.imwrite(os.path.join(conf.U_NET_OUT_DIR, filename+'_%d'%j), (mask*255.).astype(np.uint8))
     rle = list(get_rles(labels))
