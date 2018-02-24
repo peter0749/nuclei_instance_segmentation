@@ -22,7 +22,6 @@ OBJECT_SCALE     = 5.0
 COORD_SCALE      = 1.0
 WARM_UP_BATCHES  = 0
 TRUE_BOX_BUFFER  = 50
-BOX = 6 # number of anchorboxes, default:5 
 
 YOLO_DRAW_LINE_W = 1
 YOLO_SHOW_CONF = False
@@ -63,8 +62,9 @@ U_NET_EARLY_STOP = 50
 YOLO_OUT_DIR = '/hdd/dataset/nuclei_dataset/detection_output'
 U_NET_OUT_DIR = '/hdd/dataset/nuclei_dataset/unet_out'
 
-### !!! DO NOT EDITING THE CONFIGURATION BELOW !!! ###
+### !!! DO NOT EDIT THE CONFIGURATION BELOW !!! ###
 
+BOX = int(len(ANCHORS) // 2) # number of anchorboxes, default:5 
 yolo_generator_config = {
     'IMAGE_H'         : YOLO_DIM,
     'IMAGE_W'         : YOLO_DIM,
