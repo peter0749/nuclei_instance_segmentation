@@ -11,7 +11,7 @@ U_NET_DIM = 64
 # https://github.com/experiencor/basic-yolo-keras/blob/master/Yolo%20Step-by-Step.ipynb
 YOLO_DIM = 416
 YOLO_GRID= 13
-OBJECT_THRESHOLD = 0.3 # <- notice here
+OBJECT_THRESHOLD = 0.2 # <- notice here
 NMS_THRESHOLD = 0.1 # less overlapping
 U_NET_THRESHOLD = 0.6
 # ANCHORS = [0.57273, 0.677385, 1.87446, 2.06253, 3.33843, 5.47434, 7.88282, 3.52778, 9.77052, 9.16828] # basic-yolo-keras's setting
@@ -26,11 +26,11 @@ TRUE_BOX_BUFFER  = 50
 YOLO_DRAW_LINE_W = 1
 YOLO_SHOW_CONF = False
 
-YOLO_USE_MULTI_GPU=1
-U_NET_USE_MULTI_GPU=1
+YOLO_USE_MULTI_GPU=2
+U_NET_USE_MULTI_GPU=2
 
-YOLO_BATCH_SIZE=4 ## each gpus's batch size = YOLO_BATCH_SIZE / YOLO_USE_MULTI_GPU
-U_NET_BATCH_SIZE=4
+YOLO_BATCH_SIZE=48 ## each gpus's batch size = YOLO_BATCH_SIZE / YOLO_USE_MULTI_GPU
+U_NET_BATCH_SIZE=32
 
 GENERATOR_WORKERS=10
 
