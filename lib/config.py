@@ -11,12 +11,13 @@ U_NET_DIM = 64
 # https://github.com/experiencor/basic-yolo-keras/blob/master/Yolo%20Step-by-Step.ipynb
 YOLO_DIM = 416
 YOLO_GRID= 13
-YOLO_BOX = 5
+YOLO_BOX = 7 # number of anchorboxes, default:5
 OBJECT_THRESHOLD = 0.3 # <- notice here
 NMS_THRESHOLD = 0.1 # less overlapping
 U_NET_THRESHOLD = 0.6
-# ANCHORS = [0.57273, 0.677385, 1.87446, 2.06253, 3.33843, 5.47434, 7.88282, 3.52778, 9.77052, 9.16828]
-ANCHORS = [1.3221, 1.73145, 3.19275, 4.00944, 5.05587, 8.09892, 9.47112, 4.84053, 11.2364, 10.0071] # yolo-voc.cfg anchorbox setting
+# ANCHORS = [0.57273, 0.677385, 1.87446, 2.06253, 3.33843, 5.47434, 7.88282, 3.52778, 9.77052, 9.16828] # basic-yolo-keras's setting
+# ANCHORS = [1.3221, 1.73145, 3.19275, 4.00944, 5.05587, 8.09892, 9.47112, 4.84053, 11.2364, 10.0071] # yolo-voc.cfg anchorbox setting
+ANCHORS = [0.20,0.29, 0.50,0.84, 0.51,0.49, 0.84,0.75, 1.10,1.29, 2.04,2.05] # from gen_anchorbox.py
 NO_OBJECT_SCALE  = 1.0
 OBJECT_SCALE     = 5.0
 COORD_SCALE      = 1.0
