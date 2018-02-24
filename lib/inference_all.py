@@ -1,6 +1,7 @@
 import os
 import copy
 import numpy as np
+import pandas as pd
 from tqdm import tqdm
 import gc
 import tensorflow as tf
@@ -14,7 +15,7 @@ import reader
 import config as conf
 from sklearn.model_selection import train_test_split
 from generators import YOLO_BatchGenerator
-from utils import decode_netout, draw_boxes
+from utils import decode_netout, draw_boxes, rle_encoding, get_rles
 import cv2
 
 print('Loading trained weights...')
@@ -37,6 +38,9 @@ if not os.path.exists(conf.U_NET_OUT_DIR):
 if not os.path.exists(conf.YOLO_OUT_DIR):
     os.makedirs(conf.YOLO_OUT_DIR)
 
+rles = []
+new_test_ids = []
+
 for i, netout in tqdm(enumerate(netouts), total=len(netouts)):
     boxes = decode_netout(netout,
                       obj_threshold=conf.OBJECT_THRESHOLD,
@@ -57,16 +61,24 @@ for i, netout in tqdm(enumerate(netouts), total=len(netouts)):
     preds = unet_model.predict(imgcrops, batch_size=conf.U_NET_BATCH_SIZE)
 
     _, filename = os.path.split(imgs_path[i])
-    for j, pred in enumerate(preds):
+    labels = np.zeros(image.shape[:2], dtype=np.uint8)
+    for j in reversed(range(len(regions))): # j in increasing confidence order
         (xmin,xmax,ymin,ymax) = regions[j]
         mask = np.zeros(image.shape[:2], dtype=np.bool)
-        resized_pred = cv2.resize(np.squeeze(pred), (xmax-xmin, ymax-ymin))
+        resized_pred = cv2.resize(np.squeeze(preds[j]), (xmax-xmin, ymax-ymin))
         mask[ymin:ymax, xmin:xmax] = (resized_pred>conf.U_NET_THRESHOLD)
-        image[mask, :3] = 255, 0, 0 # R, G, B
-        ### run RLE here ###
-        ### pass
-        ###    end RLE   ###
-        cv2.imwrite(os.path.join(conf.U_NET_OUT_DIR, filename+'_%d'%j), (mask*255.).astype(np.uint8))
-    image = draw_boxes(image, boxes)
-    cv2.imwrite(os.path.join(conf.YOLO_OUT_DIR, filename), image.astype(np.uint8)[...,::-1]) # RGB -> BGR
+        labels[mask] = j
+        #image[mask, :3] = 255, 0, 0 # R, G, B
+        #cv2.imwrite(os.path.join(conf.U_NET_OUT_DIR, filename+'_%d'%j), (mask*255.).astype(np.uint8))
+    rle = list(get_rles(labels))
+    rles.extend(rle)
+    fileid, _ = os.path.splitext(filename)
+    new_test_ids.extend([fileid] * len(rle))
 
+    #image = draw_boxes(image, boxes)
+    #cv2.imwrite(os.path.join(conf.YOLO_OUT_DIR, filename), image.astype(np.uint8)[...,::-1]) # RGB -> BGR
+
+sub = pd.DataFrame()
+sub['ImageId'] = new_test_ids
+sub['EncodedPixels'] = pd.Series(rles).apply(lambda x: ' '.join(str(y) for y in x))
+sub.to_csv(conf.SUBMISSION, index=False)

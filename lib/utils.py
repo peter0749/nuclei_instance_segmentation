@@ -203,4 +203,18 @@ class multi_gpu_ckpt(Callback):
                 else:
                     self.base_model.save(filepath, overwrite=True)
 
+# Run-length encoding reference from https://www.kaggle.com/rakhlin/fast-run-length-encoding-python
+def rle_encoding(x):
+    dots = np.where(x.T.flatten() == 1)[0]
+    run_lengths = []
+    prev = -2
+    for b in dots:
+        if (b>prev+1): run_lengths.extend((b + 1, 0))
+        run_lengths[-1] += 1
+        prev = b
+    return run_lengths
+
+def get_rles(lab_img, cutoff=0.5):
+    for i in range(1, lab_img.max() + 1):
+        yield rle_encoding(lab_img == i)
 
