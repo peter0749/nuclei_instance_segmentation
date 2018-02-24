@@ -68,15 +68,15 @@ for i, netout in tqdm(enumerate(netouts), total=len(netouts)):
         resized_pred = cv2.resize(np.squeeze(preds[j]), (xmax-xmin, ymax-ymin))
         mask[ymin:ymax, xmin:xmax] = (resized_pred>conf.U_NET_THRESHOLD)
         labels[mask] = j
-        #image[mask, :3] = 255, 0, 0 # R, G, B
+        image[mask, :3] = 255, 0, 0 # R, G, B
         #cv2.imwrite(os.path.join(conf.U_NET_OUT_DIR, filename+'_%d'%j), (mask*255.).astype(np.uint8))
     rle = list(get_rles(labels))
     rles.extend(rle)
     fileid, _ = os.path.splitext(filename)
     new_test_ids.extend([fileid] * len(rle))
 
-    #image = draw_boxes(image, boxes)
-    #cv2.imwrite(os.path.join(conf.YOLO_OUT_DIR, filename), image.astype(np.uint8)[...,::-1]) # RGB -> BGR
+    image = draw_boxes(image, boxes)
+    cv2.imwrite(os.path.join(conf.YOLO_OUT_DIR, filename), image.astype(np.uint8)[...,::-1]) # RGB -> BGR
 
 sub = pd.DataFrame()
 sub['ImageId'] = new_test_ids
