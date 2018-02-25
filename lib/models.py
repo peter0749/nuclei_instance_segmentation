@@ -95,8 +95,8 @@ def get_uyolo_model(gpus=1, load_weights=None, verbose=False):
 
     u8 = up (c7) # 76x76
     c8 = concatenate([u8, c4])
-    c8 = _res_conv(c8, 256, 3)
-    c8 = _res_conv(c8, 256, 3)
+    c8 = _res_conv(c8, 512, 3)
+    c8 = _res_conv(c8, 512, 3)
 
     x = Conv2D(conf.U_YOLO_BOX * (4 + 1), (1,1), strides=(1,1), padding='same', kernel_initializer='he_normal')(c8)
     output = Reshape((conf.U_YOLO_GRID, conf.U_YOLO_GRID, conf.U_YOLO_BOX, 4 + 1))(x)
