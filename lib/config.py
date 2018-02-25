@@ -9,8 +9,8 @@ VALID_SPLIT = 0.1
 # U-Net for semantic segmentation
 U_NET_DIM = 64
 
-U_YOLO_DIM = 608 ## must be integer (odd number) * 32
-U_YOLO_ANCHORS = [0.69,1.13, 1.08,3.49, 1.89,1.65, 2.38,5.16, 2.40,2.96, 3.12,3.89, 3.61,5.56, 3.74,2.62, 4.42,3.95, 4.99,9.25, 5.60,5.72, 7.27,3.36, 7.47,7.36, 9.33,12.49, 12.90,9.13, 14.71,15.84] 
+U_YOLO_DIM = 416 ## must be integer (odd number) * 32
+U_YOLO_ANCHORS = [0.46,0.76, 0.74,2.49, 1.14,1.17, 1.63,4.06, 1.68,1.98, 1.99,2.90, 2.54,2.21, 2.55,1.07, 2.58,3.92, 3.18,2.98, 3.69,6.47, 4.14,4.21, 4.77,2.22, 6.09,5.14, 6.96,8.22, 10.17,9.36]
 
 # YOLO step-by-step ref:
 # https://github.com/experiencor/basic-yolo-keras/blob/master/Yolo%20Step-by-Step.ipynb
@@ -64,7 +64,7 @@ YOLO_OPT_ARGS = {
     'clipnorm'        : 1.0 ,
 }
 U_YOLO_OPT_ARGS = {
-    'lr'              : 1e-4,
+    'lr'              : 1e-3,
     'clipvalue'       : 0.1 ,
     'clipnorm'        : 1.0 ,
 }
