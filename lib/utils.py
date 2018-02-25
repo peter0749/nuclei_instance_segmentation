@@ -219,7 +219,7 @@ def get_rles(lab_img, cutoff=0.5):
         test =  rle_encoding(lab_img == i)
         if len(test)==0:
             continue
-        return test
+        yield test
 
 # reference from basic-yolo-keras (https://github.com/experiencor/basic-yolo-keras/blob/master/utils.py)
 class WeightReader:
