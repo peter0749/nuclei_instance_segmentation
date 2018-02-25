@@ -1,9 +1,9 @@
 USE_U_YOLO_PRED = True
 
 # ROOT TO DATASET (DATA & TEST)
-DATA_PATH = '/home/peter/stage1_train' # this will split into training/validation
-TEST_PATH = '/home/peter/stage1_test'
-SUBMISSION= '/home/peter/nuclei_instance_segmentation/submission.csv'
+DATA_PATH = '/hdd/dataset/nuclei_dataset/stage1_train' # this will split into training/validation
+TEST_PATH = '/hdd/dataset/nuclei_dataset/stage1_test'
+SUBMISSION= '/hdd/home/peter0749/nuclei_instance_segmentation/submission.csv'
 VALID_SPLIT = 0.1
 
 # U-Net for semantic segmentation
@@ -34,13 +34,13 @@ TRUE_BOX_BUFFER  = 50
 YOLO_DRAW_LINE_W = 1
 YOLO_SHOW_CONF = False
 
-YOLO_USE_MULTI_GPU=1
-U_YOLO_USE_MULTI_GPU=1
-U_NET_USE_MULTI_GPU=1
+YOLO_USE_MULTI_GPU=2
+U_YOLO_USE_MULTI_GPU=2
+U_NET_USE_MULTI_GPU=2
 
-YOLO_BATCH_SIZE=4 ## each gpus's batch size = YOLO_BATCH_SIZE / YOLO_USE_MULTI_GPU
-U_YOLO_BATCH_SIZE=4 ## each gpus's batch size = YOLO_BATCH_SIZE / YOLO_USE_MULTI_GPU
-U_NET_BATCH_SIZE=4
+YOLO_BATCH_SIZE=20 ## each gpus's batch size = YOLO_BATCH_SIZE / YOLO_USE_MULTI_GPU
+U_YOLO_BATCH_SIZE=32 ## each gpus's batch size = YOLO_BATCH_SIZE / YOLO_USE_MULTI_GPU
+U_NET_BATCH_SIZE=10
 
 GENERATOR_WORKERS=5
 
@@ -48,16 +48,16 @@ YOLO_EPOCHS=400
 U_NET_EPOCHS=200
 U_YOLO_EPOCHS=300
 
-YOLO_CKPT = '/home/peter/yolo.h5'
+YOLO_CKPT = '/hdd/dataset/nuclei_dataset/yolo.h5'
 YOLO_PRETRAINED = None
 
-U_YOLO_CKPT = '/home/peter/uyolo.h5'
+U_YOLO_CKPT = '/hdd/dataset/nuclei_dataset/uyolo.h5'
 
-U_NET_CKPT = '/home/peter/unet.h5'
+U_NET_CKPT = '/hdd/dataset/nuclei_dataset/unet.h5'
 
-YOLO_TFBOARD_DIR = '/home/peter/yolo_tfboard'
-U_YOLO_TFBOARD_DIR = '/home/peter/uyolo_tfboard'
-U_NET_TFBOARD_DIR = '/home/peter/unet_tfboard'
+YOLO_TFBOARD_DIR = '/hdd/dataset/nuclei_dataset/yolo_tfboard'
+U_YOLO_TFBOARD_DIR = '/hdd/dataset/nuclei_dataset/uyolo_tfboard'
+U_NET_TFBOARD_DIR = '/hdd/dataset/nuclei_dataset/unet_tfboard'
 YOLO_OPT_ARGS = {
     'lr'              : 1e-5,
     'clipvalue'       : 0.1 ,
@@ -79,9 +79,9 @@ YOLO_EARLY_STOP = 50
 U_YOLO_EARLY_STOP = 50
 U_NET_EARLY_STOP = 50
 
-YOLO_OUT_DIR = '/home/peter/detection_output'
-U_YOLO_OUT_DIR = '/home/peter/uyolo_detection_output'
-U_NET_OUT_DIR = '/home/peter/unet_out'
+YOLO_OUT_DIR =   '/hdd/dataset/nuclei_dataset/detection_output'
+U_YOLO_OUT_DIR = '/hdd/dataset/nuclei_dataset/uyolo_detection_output'
+U_NET_OUT_DIR =  '/hdd/dataset/nuclei_dataset/unet_out'
 
 ### !!! DO NOT EDIT THE CONFIGURATION BELOW !!! ###
 
