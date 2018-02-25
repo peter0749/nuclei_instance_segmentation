@@ -19,7 +19,7 @@ from utils import decode_netout, draw_boxes, rle_encoding, get_rles
 import cv2
 
 print('Loading trained weights...')
-if conf.USE_U_YOLO_PRED:
+if hasattr(conf,'USE_U_YOLO_PRED') and conf.USE_U_YOLO_PRED:
     YOLO_CKPT = conf.U_YOLO_CKPT
     YOLO_OUT_DIR = conf.U_YOLO_OUT_DIR
     YOLO_BATCH_SIZE = conf.U_YOLO_BATCH_SIZE
