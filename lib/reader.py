@@ -35,15 +35,15 @@ def dataset_filepath(root, get_masks=True):
         dir_list.append(image)
     return dir_list
 
-def dir_reader(img_meta_wo_markers):
+def dir_reader(img_meta_wo_markers, height, width):
     l = len(img_meta_wo_markers)
-    input_images = np.zeros((l,conf.YOLO_DIM, conf.YOLO_DIM, 3))
+    input_images = np.zeros((l,height, width, 3))
     original_images  = []
     image_filenames  = []
     for i, img_meta in tqdm(enumerate(img_meta_wo_markers), total=l):
         img = cv2.imread(img_meta['image'], cv2.IMREAD_COLOR)[...,:3] # only BGR channels
         img = img[...,::-1] # BGR -> RGB
-        img_input = cv2.resize(img, (conf.YOLO_DIM, conf.YOLO_DIM))
+        img_input = cv2.resize(img, (width, height))
         img_input = img_input / 255.
         input_images[i,...] = img_input
         original_images.append(img)

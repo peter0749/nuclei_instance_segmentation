@@ -18,19 +18,22 @@ from generators import YOLO_BatchGenerator
 from utils import decode_netout, draw_boxes, rle_encoding, get_rles
 import cv2
 
+print('Loading trained weights...')
 if conf.USE_U_YOLO_PRED:
     YOLO_CKPT = conf.U_YOLO_CKPT
     YOLO_OUT_DIR = conf.U_YOLO_OUT_DIR
     YOLO_BATCH_SIZE = conf.U_YOLO_BATCH_SIZE
     ANCHORS = conf.U_YOLO_ANCHORS
+    HEIGHT, WIDTH = conf.U_YOLO_DIM, conf.U_YOLO_DIM
+    yolo_model, _ = models.get_uyolo_model(gpus=1, load_weights=YOLO_CKPT)
 else:
     YOLO_CKPT = conf.YOLO_CKPT
     YOLO_OUT_DIR = conf.YOLO_OUT_DIR
     YOLO_BATCH_SIZE = conf.YOLO_BATCH_SIZE
     ANCHORS = conf.ANCHORS
+    HEIGHT, WIDTH = conf.YOLO_DIM, conf.YOLO_DIM
+    yolo_model, _ = models.get_yolo_model(gpus=1, load_weights=YOLO_CKPT)
 
-print('Loading trained weights...')
-yolo_model, _ = models.get_yolo_model(gpus=1, load_weights=conf.YOLO_CKPT)
 yolo_model.summary()
 
 unet_model, _ = models.get_U_Net_model(gpus=1, load_weights=conf.U_NET_CKPT)
@@ -38,16 +41,16 @@ unet_model.summary()
 
 print('Generating metadata...')
 imgs_meta  = reader.dataset_filepath(conf.TEST_PATH, get_masks=False)
-imgs_batch, imgs_original, imgs_path = reader.dir_reader(imgs_meta)
+imgs_batch, imgs_original, imgs_path = reader.dir_reader(imgs_meta, height=HEIGHT, width=WIDTH)
 
-netouts = yolo_model.predict([imgs_batch, np.zeros((len(imgs_batch), 1, 1, 1, conf.TRUE_BOX_BUFFER, 4))], batch_size=conf.YOLO_BATCH_SIZE, verbose=1)
+netouts = yolo_model.predict([imgs_batch, np.zeros((len(imgs_batch), 1, 1, 1, conf.TRUE_BOX_BUFFER, 4))], batch_size=YOLO_BATCH_SIZE, verbose=1)
 del imgs_batch
 gc.collect() # release memory
 
 if not os.path.exists(conf.U_NET_OUT_DIR):
     os.makedirs(conf.U_NET_OUT_DIR)
-if not os.path.exists(conf.YOLO_OUT_DIR):
-    os.makedirs(conf.YOLO_OUT_DIR)
+if not os.path.exists(YOLO_OUT_DIR):
+    os.makedirs(YOLO_OUT_DIR)
 
 rles = []
 new_test_ids = []
@@ -56,7 +59,7 @@ for i, netout in tqdm(enumerate(netouts), total=len(netouts)):
     boxes = decode_netout(netout,
                       obj_threshold=conf.OBJECT_THRESHOLD,
                       nms_threshold=conf.NMS_THRESHOLD,
-                      anchors=conf.ANCHORS)
+                      anchors=ANCHORS)
     image = copy.deepcopy(imgs_original[i]) # get an image
     imgcrops = []
     regions  = []
@@ -89,7 +92,7 @@ for i, netout in tqdm(enumerate(netouts), total=len(netouts)):
     new_test_ids.extend([fileid] * len(rle))
 
     image = draw_boxes(image, boxes)
-    cv2.imwrite(os.path.join(conf.YOLO_OUT_DIR, filename), image.astype(np.uint8)[...,::-1]) # RGB -> BGR
+    cv2.imwrite(os.path.join(YOLO_OUT_DIR, filename), image.astype(np.uint8)[...,::-1]) # RGB -> BGR
 
 sub = pd.DataFrame()
 sub['ImageId'] = new_test_ids

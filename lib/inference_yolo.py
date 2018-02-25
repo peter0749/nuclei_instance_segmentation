@@ -22,7 +22,7 @@ yolo_model.summary()
 
 print('Generating metadata...')
 imgs_meta  = reader.dataset_filepath(conf.TEST_PATH, get_masks=False)
-imgs_batch, imgs_original, imgs_path = reader.dir_reader(imgs_meta)
+imgs_batch, imgs_original, imgs_path = reader.dir_reader(imgs_meta, height=conf.YOLO_DIM, width=conf.YOLO_DIM)
 
 netouts = yolo_model.predict([imgs_batch, np.zeros((len(imgs_batch), 1, 1, 1, conf.TRUE_BOX_BUFFER, 4))], batch_size=conf.YOLO_BATCH_SIZE, verbose=1)
 del imgs_batch
