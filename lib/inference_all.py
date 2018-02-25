@@ -18,6 +18,17 @@ from generators import YOLO_BatchGenerator
 from utils import decode_netout, draw_boxes, rle_encoding, get_rles
 import cv2
 
+if conf.USE_U_YOLO_PRED:
+    YOLO_CKPT = conf.U_YOLO_CKPT
+    YOLO_OUT_DIR = conf.U_YOLO_OUT_DIR
+    YOLO_BATCH_SIZE = conf.U_YOLO_BATCH_SIZE
+    ANCHORS = conf.U_YOLO_ANCHORS
+else:
+    YOLO_CKPT = conf.YOLO_CKPT
+    YOLO_OUT_DIR = conf.YOLO_OUT_DIR
+    YOLO_BATCH_SIZE = conf.YOLO_BATCH_SIZE
+    ANCHORS = conf.ANCHORS
+
 print('Loading trained weights...')
 yolo_model, _ = models.get_yolo_model(gpus=1, load_weights=conf.YOLO_CKPT)
 yolo_model.summary()

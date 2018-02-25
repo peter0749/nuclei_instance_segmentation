@@ -8,6 +8,18 @@ from reader import dataset_filepath
 argparser = argparse.ArgumentParser()
 
 argparser.add_argument(
+    '--grid_w',
+    type=float,
+    default=13,
+    help='width of grid')
+
+argparser.add_argument(
+    '--grid_h',
+    type=float,
+    default=13,
+    help='height of grid')
+
+argparser.add_argument(
     '-a',
     '--anchors',
     type=int,
@@ -108,8 +120,8 @@ def main(argv):
 
     train_imgs = dataset_filepath(conf.DATA_PATH, get_masks=True)
 
-    grid_w = conf.YOLO_DIM/32 # default: 13?
-    grid_h = conf.YOLO_DIM/32
+    grid_w = args.grid_w # default: 13?
+    grid_h = args.grid_h
 
     # run k_mean to find the anchors
     annotation_dims = []
