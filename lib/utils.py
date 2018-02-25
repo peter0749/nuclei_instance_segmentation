@@ -216,7 +216,10 @@ def rle_encoding(x):
 
 def get_rles(lab_img, cutoff=0.5):
     for i in range(1, lab_img.max() + 1):
-        yield rle_encoding(lab_img == i)
+        test =  rle_encoding(lab_img == i)
+        if len(test)==0:
+            continue
+        return test
 
 # reference from basic-yolo-keras (https://github.com/experiencor/basic-yolo-keras/blob/master/utils.py)
 class WeightReader:

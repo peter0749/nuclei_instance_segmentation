@@ -71,6 +71,8 @@ for i, netout in tqdm(enumerate(netouts), total=len(netouts)):
         image[mask, :3] = 255, 0, 0 # R, G, B
         #cv2.imwrite(os.path.join(conf.U_NET_OUT_DIR, filename+'_%d'%j), (mask*255.).astype(np.uint8))
     rle = list(get_rles(labels))
+    if len(rle)==0:
+        rle = [1,1]
     rles.extend(rle)
     fileid, _ = os.path.splitext(filename)
     new_test_ids.extend([fileid] * len(rle))
