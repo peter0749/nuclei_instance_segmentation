@@ -52,7 +52,7 @@ for n, path in tqdm(enumerate(imgs_path), total=len(imgs_path)):
     _ , filename = os.path.split(path)
     id_ , _ = os.path.splitext(filename)
     label = lb(preds_test_upsampled[n][0]>conf.U_NET_THRESHOLD, preds_test_upsampled[n][1]>conf.U_NET_THRESHOLD_MARKER)
-    plt.imsave(os.path.join(conf.U_NET_OUT_DIR, filename), label, cmap=plt.get('tab20_r'))
+    plt.imsave(os.path.join(conf.U_NET_OUT_DIR, filename), label, cmap='tab20')
     rle = list(get_rles(label))
     rles.extend(rle)
     new_test_ids.extend([id_] * len(rle))
