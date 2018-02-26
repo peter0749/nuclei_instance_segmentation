@@ -269,8 +269,8 @@ class U_NET_BatchGenerator(Sequence):
         image = image[...,::-1] ## BGR -> RGB
 
         mask = np.zeros((*image.shape[:2], 1), dtype=np.uint8)
-        for mask_name in train_instance['masks']:
-            mask_  = cv2.imread(mask_name, cv2.IMREAD_GRAYSCALE)
+        for maskinfo in train_instance['masks']:
+            mask_  = cv2.imread(maskinfo['mask'], cv2.IMREAD_GRAYSCALE)
             assert mask_ is not None
             mask = np.maximum(mask, mask_)
 
