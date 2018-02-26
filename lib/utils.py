@@ -203,7 +203,9 @@ class multi_gpu_ckpt(Callback):
                 else:
                     self.base_model.save(filepath, overwrite=True)
 
-# Run-length encoding reference from https://www.kaggle.com/rakhlin/fast-run-length-encoding-python
+from scipy import ndimage as ndi
+from skimage.morphology import watershed
+# Run-length encoding from https://www.kaggle.com/rakhlin/fast-run-length-encoding-python
 def rle_encoding(x):
     dots = np.where(x.T.flatten() == 1)[0]
     run_lengths = []
@@ -214,12 +216,17 @@ def rle_encoding(x):
         prev = b
     return run_lengths
 
-def get_rles(lab_img, cutoff=0.5):
+def lb(image, marker):
+    distance = ndi.distance_transform_edt(image)
+    labels = watershed(-distance, marker, mask=image)
+    if np.sum(labels) == 0:
+        labels[0,0] = 1
+    return labels
+
+def prob_to_rles(x, marker, cutoff=0.5, cutoff_marker=0.5):
+    lab_img = lb(x > cutoff, marker)
     for i in range(1, lab_img.max() + 1):
-        test =  rle_encoding(lab_img == i)
-        if len(test)==0:
-            continue
-        yield test
+        yield rle_encoding(lab_img == i)
 
 # reference from basic-yolo-keras (https://github.com/experiencor/basic-yolo-keras/blob/master/utils.py)
 class WeightReader:

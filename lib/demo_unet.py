@@ -31,16 +31,17 @@ names = []
 
 print('Getting masks...')
 for img in tqdm(train_imgs, total=len(train_imgs)):
-    base_img = cv2.imread(img['image'], cv2.IMREAD_COLOR)[...,:3] # BGR channels
+    base_img = cv2.resize(cv2.imread(img['image'], cv2.IMREAD_COLOR)[...,:3], (conf.U_NET_DIM, conf.U_NET_DIM)) # BGR channels
     base_img = base_img[...,::-1] # BGR -> RGB
-    for mask in img['masks']:
-        xmin, xmax, ymin, ymax = mask['xmin'], mask['xmax'], mask['ymin'], mask['ymax']
-        crop_img = cv2.resize(base_img[ymin:ymax, xmin:xmax], (conf.U_NET_DIM, conf.U_NET_DIM))
-        imgs.append(crop_img)
-        real_region = np.squeeze(cv2.imread(mask['mask'], cv2.IMREAD_GRAYSCALE) > 0).astype(np.bool)
-        real_region = real_region[ymin:ymax, xmin:xmax]
-        masks.append(real_region)
-        names.append(os.path.split(mask['mask'])[-1])
+    imgs.append(base_img)
+
+    mask = np.zeros((conf.U_NET_DIM, conf.U_NET_DIM, 1), dtype=np.uint8)
+
+    for maskl in img['masks']:
+        real_region = np.squeeze(cv2.resize(cv2.imread(maskl['mask'], cv2.IMREAD_GRAYSCALE),(conf.U_NET_DIM, conf.U_NET_DIM)) > 0).astype(np.bool)
+        mask = np.maximum(mask, real_region)
+    masks.append((mask>128).astype(np.bool))
+    names.append(img['image'])
 
 imgs = np.array(imgs).astype(np.float32) / 255. # normalize
 print('data shape: %s'%(str(imgs.shape)))
@@ -50,7 +51,7 @@ preds = unet_model.predict(imgs, batch_size=conf.U_NET_BATCH_SIZE, verbose=1)
 for i, pred in tqdm(enumerate(preds), total=len(preds)):
     mask = masks[i]
     name = names[i]
-    pred = (cv2.resize(np.squeeze(pred), mask.shape[::-1]) > conf.U_NET_THRESHOLD).astype(np.bool)
+    pred = (np.squeeze(pred) > conf.U_NET_THRESHOLD).astype(np.bool)
     union= mask & pred
     fp   = pred & ~union
     fn   = mask & ~union

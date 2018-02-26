@@ -232,12 +232,7 @@ class U_NET_BatchGenerator(Sequence):
             random_order=True
         )
 
-        for img in images:
-            for mask in copy.deepcopy(img['masks']):
-                mask['image'] = img['image']
-                mask['width'] = img['width']
-                mask['height'] = img['height']
-                self.images.append(mask) # list of: {'image':filepath, 'mask':filepath, width, height, xmax, ymax, ...}
+        self.images = copy.deepcopy(images)
 
         if self.shuffle: np.random.shuffle(self.images)
 
@@ -273,24 +268,11 @@ class U_NET_BatchGenerator(Sequence):
         assert image is not None
         image = image[...,::-1] ## BGR -> RGB
 
-        mask_name = train_instance['mask']
-        mask  = cv2.imread(mask_name, cv2.IMREAD_GRAYSCALE)
-        assert mask is not None
-        mask  = np.expand_dims(mask, -1)
-
-        ymin, ymax = train_instance['ymin'], train_instance['ymax']
-        xmin, xmax = train_instance['xmin'], train_instance['xmax']
-
-        if jitter:
-            min_size = 3
-            croph, cropw = max(min_size, np.random.uniform(0.9, 1.1)*(ymax-ymin)), max(min_size, np.random.uniform(0.9, 1.1)*(xmax-xmin)) ## random scale
-            xmin = np.clip(np.random.uniform(-0.1, 0.1) * cropw + xmin, 0, image.shape[1]-min_size) ## random crop
-            ymin = np.clip(np.random.uniform(-0.1, 0.1) * croph + ymin, 0, image.shape[0]-min_size)
-            xmax = xmin+cropw
-            ymax = ymin+croph
-
-        image = image[int(ymin):int(ymax), int(xmin):int(xmax)]
-        mask  =  mask[int(ymin):int(ymax), int(xmin):int(xmax)]
+        mask = np.zeros((*image.shape[:2], 1), dtype=np.uint8)
+        for mask_name in train_instance['masks']:
+            mask_  = cv2.imread(mask_name, cv2.IMREAD_GRAYSCALE)
+            assert mask_ is not None
+            mask = np.maximum(mask, mask_)
 
         h, w, c = image.shape
 
@@ -298,6 +280,19 @@ class U_NET_BatchGenerator(Sequence):
             seq_det = self.aug_pipe.to_deterministic()
             image = seq_det.augment_image(image)
             mask  = seq_det.augment_image( mask)
+
+            # random amplify each channel
+            a = .1 # amptitude
+            t  = [np.random.uniform(-a,a)]
+            t += [np.random.uniform(-a,a)]
+            t += [np.random.uniform(-a,a)]
+            t = np.array(t)
+
+            image = image.astype(np.float32) / 255.
+            image = np.clip(image * (1. + t), 0, 1) # channel wise amplify
+            up = np.random.uniform(0.95, 1.05) # change gamma
+            image = np.clip(image**up * 255., 0, 255) # apply gamma and convert back to range [0,255]
+            image = image.astype(np.uint8) # convert back to uint8
 
         # resize the image to standard size
         image = cv2.resize(image, (self.config['IMAGE_H'], self.config['IMAGE_W'])) # shape: (IMAGE_H, IMAGE_W, 3)
