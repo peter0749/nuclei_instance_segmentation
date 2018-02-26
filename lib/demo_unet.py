@@ -35,18 +35,19 @@ for img in tqdm(train_imgs, total=len(train_imgs)):
     base_img = base_img[...,::-1] # BGR -> RGB
     imgs.append(base_img)
 
-    mask = np.zeros((conf.U_NET_DIM, conf.U_NET_DIM, 1), dtype=np.uint8)
+    mask = np.zeros((img['height'], img['width']), dtype=np.uint8)
 
     for maskl in img['masks']:
-        real_region = np.squeeze(cv2.resize(cv2.imread(maskl['mask'], cv2.IMREAD_GRAYSCALE),(conf.U_NET_DIM, conf.U_NET_DIM)) > 0).astype(np.bool)
+        real_region = cv2.imread(maskl['mask'], cv2.IMREAD_GRAYSCALE)
         mask = np.maximum(mask, real_region)
+    mask = cv2.resize(mask, (conf.U_NET_DIM, conf.U_NET_DIM))
     masks.append((mask>128).astype(np.bool))
     names.append(img['image'])
 
 imgs = np.array(imgs).astype(np.float32) / 255. # normalize
 print('data shape: %s'%(str(imgs.shape)))
 
-preds = unet_model.predict(imgs, batch_size=conf.U_NET_BATCH_SIZE, verbose=1)
+preds = np.squeeze(unet_model.predict(imgs, batch_size=conf.U_NET_BATCH_SIZE, verbose=1))
 
 for i, pred in tqdm(enumerate(preds), total=len(preds)):
     mask = masks[i]
