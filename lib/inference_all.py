@@ -14,8 +14,11 @@ import models
 import reader
 import config as conf
 from sklearn.model_selection import train_test_split
-from utils import decode_netout, draw_dots, rle_encoding, prob_to_rles
+from utils import decode_netout, draw_dots, rle_encoding, get_rles, lb
 import cv2
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 print('Loading trained weights...')
 
@@ -48,7 +51,9 @@ new_test_ids = []
 for n, path in tqdm(enumerate(imgs_path), total=len(imgs_path)):
     _ , filename = os.path.split(path)
     id_ , _ = os.path.splitext(filename)
-    rle = list(prob_to_rles(preds_test_upsampled[n][0], preds_test_upsampled[n][1]))
+    label = lb(preds_test_upsampled[n][0]>conf.U_NET_THRESHOLD, preds_test_upsampled[n][1]>conf.U_NET_THRESHOLD_MARKER)
+    plt.imsave(os.path.join(conf.U_NET_OUT_DIR, filename), label, cmap=plt.get('tab20_r'))
+    rle = list(get_rles(label))
     rles.extend(rle)
     new_test_ids.extend([id_] * len(rle))
 
