@@ -1,4 +1,5 @@
 import os
+import math
 import copy
 import tensorflow as tf
 import copy
@@ -18,7 +19,7 @@ class BoundBox:
 def normalize(image):
     return image.astype(np.float32) / 255.
 
-def sigmoid(x):
+def sigmoid(x):  
     return 1. / (1. + np.exp(-x))
 
 def softmax(x, axis=-1, t=-100.):

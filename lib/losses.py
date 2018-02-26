@@ -55,7 +55,7 @@ def yolo_loss(y_true, y_pred):
     nb_conf_box  = tf.reduce_sum(tf.to_float(conf_mask  > 0.0))
 
     loss_xy    = tf.clip_by_value( .5 * tf.reduce_sum(tf.square(true_box_xy-pred_box_xy)     * coord_mask) / (nb_coord_box + 1e-8) , conf.YOLO_MIN_LOSS, conf.YOLO_MAX_LOSS)
-    loss_conf  = tf.clip_by_value( .5 * tf.reduce_sum(tf.square(true_box_conf-pred_box_conf) * conf_mask)  / (nb_conf_box  + 1e-8) , conf.YOLO_MIN_LOSS, conf.YOLO_MAX_LOSS)
+    loss_conf  = tf.clip_by_value( .1 * tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(logits=pred_box_conf, labels=true_box_conf) * conf_mask)  / (nb_conf_box  + 1e-8) , conf.YOLO_MIN_LOSS, conf.YOLO_MAX_LOSS)
 
     loss = loss_xy + loss_conf
 
