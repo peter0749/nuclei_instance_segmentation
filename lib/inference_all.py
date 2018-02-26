@@ -35,7 +35,7 @@ for n, img in enumerate(imgs_u_net):
     imgs_u_net[n] = cv2.resize(img, (conf.U_NET_DIM, conf.U_NET_DIM))
 imgs_u_net = np.array(imgs_u_net)
 
-netouts = yolo_model.predict([imgs_batch, np.zeros((len(imgs_batch), 1, 1, 1, conf.TRUE_BOX_BUFFER, 4))], batch_size=conf.YOLO_BATCH_SIZE, verbose=1)
+netouts = yolo_model.predict(imgs_batch, batch_size=conf.YOLO_BATCH_SIZE, verbose=1)
 preds   = np.squeeze(unet_model.predict(imgs_u_net, batch_size=conf.U_NET_BATCH_SIZE, verbose=1))
 
 del imgs_batch, imgs_u_net
@@ -51,11 +51,9 @@ new_test_ids = []
 
 for i, netout in tqdm(enumerate(netouts), total=len(netouts)):
     boxes = decode_netout(netout,
-                      obj_threshold=conf.OBJECT_THRESHOLD,
-                      nms_threshold=conf.NMS_THRESHOLD,
-                      anchors=conf.ANCHORS)
+                      obj_threshold=conf.OBJECT_THRESHOLD)
     pred = preds[i]
-    marker = np.zeros_like(pred, dtype=np.uint8)
+    marker = np.zeros_like(pred, dtype=np.uint32)
     h, w = marker.shape
     for j, box in enumerate(boxes):
         px, py = int(box.x//w), int(box.y//h)

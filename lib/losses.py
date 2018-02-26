@@ -8,273 +8,63 @@ def unet_loss(y_true, y_pred):
     from metrics import dice_coef
     return .5 * binary_crossentropy(y_true, y_pred) - dice_coef(y_true, y_pred)
 
-def yolo_loss(true_boxes):
-    def func(y_true, y_pred):
-        mask_shape = tf.shape(y_true)[:4]
+def yolo_loss(y_true, y_pred):
+    mask_shape = tf.shape(y_true)[:3]
 
-        cell_x = tf.to_float(tf.reshape(tf.tile(tf.range(conf.YOLO_GRID), [conf.YOLO_GRID]), (1, conf.YOLO_GRID, conf.YOLO_GRID, 1, 1)))
-        cell_y = tf.transpose(cell_x, (0,2,1,3,4))
+    cell_x = tf.to_float(tf.reshape(tf.tile(tf.range(conf.YOLO_GRID), [conf.YOLO_GRID]), (1, conf.YOLO_GRID, conf.YOLO_GRID, 1)))
+    cell_y = tf.transpose(cell_x, (0,2,1,3))
 
-        cell_grid = tf.tile(tf.concat([cell_x,cell_y], -1), [conf.YOLO_BATCH_SIZE, 1, 1, conf.BOX, 1])
+    cell_grid = tf.tile(tf.concat([cell_x,cell_y], -1), [conf.YOLO_BATCH_SIZE, 1, 1, 1])
 
-        coord_mask = tf.zeros(mask_shape)
-        conf_mask  = tf.zeros(mask_shape)
-        class_mask = tf.zeros(mask_shape)
+    coord_mask = tf.zeros(mask_shape)
+    conf_mask  = tf.zeros(mask_shape)
 
-        seen = tf.Variable(0.)
-        total_recall = tf.Variable(0.)
-
-        """
-        Adjust prediction
-        """
-        ### adjust x and y
-        pred_box_xy = tf.sigmoid(y_pred[..., :2]) + cell_grid
-
-        ### adjust w and h
-        pred_box_wh = tf.exp(y_pred[..., 2:4]) * np.reshape(conf.ANCHORS, [1,1,1,conf.BOX,2])
+    seen = tf.Variable(0.)
+    total_recall = tf.Variable(0.)
 
-        ### adjust confidence
-        pred_box_conf = tf.sigmoid(y_pred[..., 4])
-
-        """
-        Adjust ground truth
-        """
-        ### adjust x and y
-        true_box_xy = y_true[..., 0:2] # relative position to the containing cell
-
-        ### adjust w and h
-        true_box_wh = y_true[..., 2:4] # number of cells accross, horizontally and vertically
+    """
+    Adjust prediction
+    """
+    ### adjust x and y
+    pred_box_xy = tf.sigmoid(y_pred[..., :2]) + cell_grid
 
-        ### adjust confidence
-        true_wh_half = true_box_wh / 2.
-        true_mins    = true_box_xy - true_wh_half
-        true_maxes   = true_box_xy + true_wh_half
-
-        pred_wh_half = pred_box_wh / 2.
-        pred_mins    = pred_box_xy - pred_wh_half
-        pred_maxes   = pred_box_xy + pred_wh_half
+    ### adjust confidence
+    pred_box_conf = tf.sigmoid(y_pred[..., 2])
 
-        intersect_mins  = tf.maximum(pred_mins,  true_mins)
-        intersect_maxes = tf.minimum(pred_maxes, true_maxes)
-        intersect_wh    = tf.maximum(intersect_maxes - intersect_mins, 0.)
-        intersect_areas = intersect_wh[..., 0] * intersect_wh[..., 1]
+    """
+    Adjust ground truth
+    """
+    ### adjust x and y
+    true_box_xy = y_true[..., 0:2] # relative position to the containing cell
 
-        true_areas = true_box_wh[..., 0] * true_box_wh[..., 1]
-        pred_areas = pred_box_wh[..., 0] * pred_box_wh[..., 1]
+    true_box_conf = y_true[..., 2]
 
-        union_areas = pred_areas + true_areas - intersect_areas
-        iou_scores  = tf.truediv(intersect_areas, union_areas)
+    """
+    Determine the masks
+    """
+    ### coordinate mask: simply the position of the ground truth boxes (the predictors)
+    coord_mask = tf.expand_dims(y_true[..., 2], axis=-1) * conf.COORD_SCALE
 
-        true_box_conf = iou_scores * y_true[..., 4]
+    # penalize the confidence of the boxes, which are reponsible for corresponding ground truth box
+    conf_mask = conf_mask + y_true[..., 2] * conf.OBJECT_SCALE
 
-        """
-        Determine the masks
-        """
-        ### coordinate mask: simply the position of the ground truth boxes (the predictors)
-        coord_mask = tf.expand_dims(y_true[..., 4], axis=-1) * conf.COORD_SCALE
+    """
+    Finalize the loss
+    """
+    nb_coord_box = tf.reduce_sum(tf.to_float(coord_mask > 0.0))
+    nb_conf_box  = tf.reduce_sum(tf.to_float(conf_mask  > 0.0))
 
-        ### confidence mask: penelize predictors + penalize boxes with low IOU
-        # penalize the confidence of the boxes, which have IOU with some ground truth box < 0.6
-        true_xy = true_boxes[..., 0:2]
-        true_wh = true_boxes[..., 2:4]
+    loss_xy    = tf.clip_by_value( .5 * tf.reduce_sum(tf.square(true_box_xy-pred_box_xy)     * coord_mask) / (nb_coord_box + 1e-8) , conf.YOLO_MIN_LOSS, conf.YOLO_MAX_LOSS)
+    loss_conf  = tf.clip_by_value( .5 * tf.reduce_sum(tf.square(true_box_conf-pred_box_conf) * conf_mask)  / (nb_conf_box  + 1e-8) , conf.YOLO_MIN_LOSS, conf.YOLO_MAX_LOSS)
 
-        true_wh_half = true_wh / 2.
-        true_mins    = true_xy - true_wh_half
-        true_maxes   = true_xy + true_wh_half
+    loss = loss_xy + loss_conf
 
-        pred_xy = tf.expand_dims(pred_box_xy, 4)
-        pred_wh = tf.expand_dims(pred_box_wh, 4)
+    """
+    Debugging code
+    """
 
-        pred_wh_half = pred_wh / 2.
-        pred_mins    = pred_xy - pred_wh_half
-        pred_maxes   = pred_xy + pred_wh_half
+    loss = tf.Print(loss, [loss_xy], message='\nLoss XY \t', summarize=1000)
+    loss = tf.Print(loss, [loss_conf], message='Loss Conf \t', summarize=1000)
 
-        intersect_mins  = tf.maximum(pred_mins,  true_mins)
-        intersect_maxes = tf.minimum(pred_maxes, true_maxes)
-        intersect_wh    = tf.maximum(intersect_maxes - intersect_mins, 0.)
-        intersect_areas = intersect_wh[..., 0] * intersect_wh[..., 1]
-
-        true_areas = true_wh[..., 0] * true_wh[..., 1]
-        pred_areas = pred_wh[..., 0] * pred_wh[..., 1]
-
-        union_areas = pred_areas + true_areas - intersect_areas
-        iou_scores  = tf.truediv(intersect_areas, union_areas)
-
-        best_ious = tf.reduce_max(iou_scores, axis=4)
-        conf_mask = conf_mask + tf.to_float(best_ious < 0.6) * (1 - y_true[..., 4]) * conf.NO_OBJECT_SCALE
-
-        # penalize the confidence of the boxes, which are reponsible for corresponding ground truth box
-        conf_mask = conf_mask + y_true[..., 4] * conf.OBJECT_SCALE
-
-        """
-        Warm-up training
-        """
-        no_boxes_mask = tf.to_float(coord_mask < conf.COORD_SCALE/2.)
-        seen = tf.assign_add(seen, 1.)
-
-        true_box_xy, true_box_wh, coord_mask = tf.cond(tf.less(seen, conf.WARM_UP_BATCHES),
-                              lambda: [true_box_xy + (0.5 + cell_grid) * no_boxes_mask,
-                                       true_box_wh + tf.ones_like(true_box_wh) * np.reshape(conf.ANCHORS, [1,1,1,conf.BOX,2]) * no_boxes_mask,
-                                       tf.ones_like(coord_mask)],
-                              lambda: [true_box_xy,
-                                       true_box_wh,
-                                       coord_mask])
-
-        """
-        Finalize the loss
-        """
-        nb_coord_box = tf.reduce_sum(tf.to_float(coord_mask > 0.0))
-        nb_conf_box  = tf.reduce_sum(tf.to_float(conf_mask  > 0.0))
-
-        loss_xy    = tf.clip_by_value( .5 * tf.reduce_sum(tf.square(true_box_xy-pred_box_xy)     * coord_mask) / (nb_coord_box + 1e-8) , conf.YOLO_MIN_LOSS, conf.YOLO_MAX_LOSS)
-        loss_wh    = tf.clip_by_value( .5 * tf.reduce_sum(tf.square(tf.sqrt(true_box_wh+1e-8) - tf.sqrt(pred_box_wh+1e-8))     * coord_mask) / (nb_coord_box + 1e-8) , conf.YOLO_MIN_LOSS, conf.YOLO_MAX_LOSS)
-        loss_conf  = tf.clip_by_value( .5 * tf.reduce_sum(tf.square(true_box_conf-pred_box_conf) * conf_mask)  / (nb_conf_box  + 1e-8) , conf.YOLO_MIN_LOSS, conf.YOLO_MAX_LOSS)
-
-        loss = loss_xy + loss_wh + loss_conf
-
-        """
-        Debugging code
-        """
-
-        loss = tf.Print(loss, [loss_xy], message='\nLoss XY \t', summarize=1000)
-        loss = tf.Print(loss, [loss_wh], message='Loss WH \t', summarize=1000)
-        loss = tf.Print(loss, [loss_conf], message='Loss Conf \t', summarize=1000)
-
-        return loss
-    return func
-
-def uyolo_loss(true_boxes):
-    def func(y_true, y_pred):
-        mask_shape = tf.shape(y_true)[:4]
-
-        cell_x = tf.to_float(tf.reshape(tf.tile(tf.range(conf.U_YOLO_GRID), [conf.U_YOLO_GRID]), (1, conf.U_YOLO_GRID, conf.U_YOLO_GRID, 1, 1)))
-        cell_y = tf.transpose(cell_x, (0,2,1,3,4))
-
-        cell_grid = tf.tile(tf.concat([cell_x,cell_y], -1), [conf.U_YOLO_BATCH_SIZE, 1, 1, conf.U_YOLO_BOX, 1])
-
-        coord_mask = tf.zeros(mask_shape)
-        conf_mask  = tf.zeros(mask_shape)
-        class_mask = tf.zeros(mask_shape)
-
-        seen = tf.Variable(0.)
-        total_recall = tf.Variable(0.)
-
-        """
-        Adjust prediction
-        """
-        ### adjust x and y
-        pred_box_xy = tf.sigmoid(y_pred[..., :2]) + cell_grid
-
-        ### adjust w and h
-        pred_box_wh = tf.exp(y_pred[..., 2:4]) * np.reshape(conf.U_YOLO_ANCHORS, [1,1,1,conf.U_YOLO_BOX,2])
-
-        ### adjust confidence
-        pred_box_conf = tf.sigmoid(y_pred[..., 4])
-
-        """
-        Adjust ground truth
-        """
-        ### adjust x and y
-        true_box_xy = y_true[..., 0:2] # relative position to the containing cell
-
-        ### adjust w and h
-        true_box_wh = y_true[..., 2:4] # number of cells accross, horizontally and vertically
-
-        ### adjust confidence
-        true_wh_half = true_box_wh / 2.
-        true_mins    = true_box_xy - true_wh_half
-        true_maxes   = true_box_xy + true_wh_half
-
-        pred_wh_half = pred_box_wh / 2.
-        pred_mins    = pred_box_xy - pred_wh_half
-        pred_maxes   = pred_box_xy + pred_wh_half
-
-        intersect_mins  = tf.maximum(pred_mins,  true_mins)
-        intersect_maxes = tf.minimum(pred_maxes, true_maxes)
-        intersect_wh    = tf.maximum(intersect_maxes - intersect_mins, 0.)
-        intersect_areas = intersect_wh[..., 0] * intersect_wh[..., 1]
-
-        true_areas = true_box_wh[..., 0] * true_box_wh[..., 1]
-        pred_areas = pred_box_wh[..., 0] * pred_box_wh[..., 1]
-
-        union_areas = pred_areas + true_areas - intersect_areas
-        iou_scores  = tf.truediv(intersect_areas, union_areas)
-
-        true_box_conf = iou_scores * y_true[..., 4]
-
-        """
-        Determine the masks
-        """
-        ### coordinate mask: simply the position of the ground truth boxes (the predictors)
-        coord_mask = tf.expand_dims(y_true[..., 4], axis=-1) * conf.U_YOLO_COORD_SCALE
-
-        ### confidence mask: penelize predictors + penalize boxes with low IOU
-        # penalize the confidence of the boxes, which have IOU with some ground truth box < 0.6
-        true_xy = true_boxes[..., 0:2]
-        true_wh = true_boxes[..., 2:4]
-
-        true_wh_half = true_wh / 2.
-        true_mins    = true_xy - true_wh_half
-        true_maxes   = true_xy + true_wh_half
-
-        pred_xy = tf.expand_dims(pred_box_xy, 4)
-        pred_wh = tf.expand_dims(pred_box_wh, 4)
-
-        pred_wh_half = pred_wh / 2.
-        pred_mins    = pred_xy - pred_wh_half
-        pred_maxes   = pred_xy + pred_wh_half
-
-        intersect_mins  = tf.maximum(pred_mins,  true_mins)
-        intersect_maxes = tf.minimum(pred_maxes, true_maxes)
-        intersect_wh    = tf.maximum(intersect_maxes - intersect_mins, 0.)
-        intersect_areas = intersect_wh[..., 0] * intersect_wh[..., 1]
-
-        true_areas = true_wh[..., 0] * true_wh[..., 1]
-        pred_areas = pred_wh[..., 0] * pred_wh[..., 1]
-
-        union_areas = pred_areas + true_areas - intersect_areas
-        iou_scores  = tf.truediv(intersect_areas, union_areas)
-
-        best_ious = tf.reduce_max(iou_scores, axis=4)
-        conf_mask = conf_mask + tf.to_float(best_ious < 0.6) * (1 - y_true[..., 4]) * conf.U_YOLO_NO_OBJECT_SCALE
-
-        # penalize the confidence of the boxes, which are reponsible for corresponding ground truth box
-        conf_mask = conf_mask + y_true[..., 4] * conf.U_YOLO_OBJECT_SCALE
-
-        """
-        Warm-up training
-        """
-        no_boxes_mask = tf.to_float(coord_mask < conf.U_YOLO_COORD_SCALE/2.)
-        seen = tf.assign_add(seen, 1.)
-
-        true_box_xy, true_box_wh, coord_mask = tf.cond(tf.less(seen, conf.U_YOLO_WARM_UP_BATCHES),
-                              lambda: [true_box_xy + (0.5 + cell_grid) * no_boxes_mask,
-                                       true_box_wh + tf.ones_like(true_box_wh) * np.reshape(conf.U_YOLO_ANCHORS, [1,1,1,conf.U_YOLO_BOX,2]) * no_boxes_mask,
-                                       tf.ones_like(coord_mask)],
-                              lambda: [true_box_xy,
-                                       true_box_wh,
-                                       coord_mask])
-
-        """
-        Finalize the loss
-        """
-        nb_coord_box = tf.reduce_sum(tf.to_float(coord_mask > 0.0))
-        nb_conf_box  = tf.reduce_sum(tf.to_float(conf_mask  > 0.0))
-
-        loss_xy    = tf.clip_by_value( .5 * tf.reduce_sum(tf.square(true_box_xy-pred_box_xy)     * coord_mask) / (nb_coord_box + 1e-8) , conf.YOLO_MIN_LOSS, conf.YOLO_MAX_LOSS)
-        loss_wh    = tf.clip_by_value( .5 * tf.reduce_sum(tf.square(tf.sqrt(true_box_wh+1e-8) - tf.sqrt(pred_box_wh+1e-8))     * coord_mask) / (nb_coord_box + 1e-8) , conf.YOLO_MIN_LOSS, conf.YOLO_MAX_LOSS)
-        loss_conf  = tf.clip_by_value( .5 * tf.reduce_sum(tf.square(true_box_conf-pred_box_conf) * conf_mask)  / (nb_conf_box  + 1e-8) , conf.YOLO_MIN_LOSS, conf.YOLO_MAX_LOSS)
-
-        loss = loss_xy + loss_wh + loss_conf
-
-        """
-        Debugging code
-        """
-
-        loss = tf.Print(loss, [loss_xy], message='\nLoss XY \t', summarize=1000)
-        loss = tf.Print(loss, [loss_wh], message='Loss WH \t', summarize=1000)
-        loss = tf.Print(loss, [loss_conf], message='Loss Conf \t', summarize=1000)
-
-        return loss
-    return func
+    return loss
 

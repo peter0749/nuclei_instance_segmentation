@@ -6,7 +6,7 @@ import numpy as np
 import imgaug as ia
 from imgaug import augmenters as iaa
 from keras.utils import Sequence
-from utils import BoundBox, normalize, bbox_iou
+from utils import BoundBox, normalize
 from reader import dataset_filepath
 import config as conf
 
@@ -25,8 +25,6 @@ class YOLO_BatchGenerator(Sequence):
         self.shuffle = shuffle
         self.jitter  = jitter
         self.norm    = norm
-
-        self.anchors = [BoundBox(0, 0, config['ANCHORS'][2*i], config['ANCHORS'][2*i+1]) for i in range(int(len(config['ANCHORS'])//2))]
 
         ### augmentors by https://github.com/aleju/imgaug
         sometimes = lambda aug: iaa.Sometimes(0.5, aug)
@@ -76,8 +74,7 @@ class YOLO_BatchGenerator(Sequence):
             l_bound = r_bound - self.config['BATCH_SIZE']
 
         x_batch = np.zeros((r_bound - l_bound, self.config['IMAGE_H'], self.config['IMAGE_W'], 3))                         # input images
-        b_batch = np.zeros((r_bound - l_bound, 1     , 1     , 1    ,  self.config['TRUE_BOX_BUFFER'], 4))   # list of self.config['TRUE_self.config['BOX']_BUFFER'] GT boxes
-        y_batch = np.zeros((r_bound - l_bound, self.config['GRID_H'],  self.config['GRID_W'], self.config['BOX'], 4+1))                # desired network output
+        y_batch = np.zeros((r_bound - l_bound, self.config['GRID_H'],  self.config['GRID_W'], 2+1))                # desired network output
 
         for instance_count, train_instance in enumerate(self.images[l_bound:r_bound]):
             # augment input image and fix object's position and size
@@ -87,52 +84,22 @@ class YOLO_BatchGenerator(Sequence):
             true_box_index = 0
 
             for obj in all_objs:
-                if obj['xmax'] > obj['xmin'] and obj['ymax'] > obj['ymin']:
-                    center_x = .5*(obj['xmin'] + obj['xmax'])
-                    center_x = center_x / (float(self.config['IMAGE_W']) / self.config['GRID_W'])
-                    center_y = .5*(obj['ymin'] + obj['ymax'])
-                    center_y = center_y / (float(self.config['IMAGE_H']) / self.config['GRID_H'])
+                center_x = obj['x_center'] / (float(self.config['IMAGE_W']) / self.config['GRID_W'])
+                center_y = obj['y_center'] / (float(self.config['IMAGE_H']) / self.config['GRID_H'])
 
-                    grid_x = int(np.floor(center_x))
-                    grid_y = int(np.floor(center_y))
+                grid_x = int(np.floor(center_x))
+                grid_y = int(np.floor(center_y))
 
-                    if grid_x < self.config['GRID_W'] and grid_y < self.config['GRID_H']:
-                        center_w = (obj['xmax'] - obj['xmin']) / (float(self.config['IMAGE_W']) / self.config['GRID_W']) # unit: grid cell
-                        center_h = (obj['ymax'] - obj['ymin']) / (float(self.config['IMAGE_H']) / self.config['GRID_H']) # unit: grid cell
+                if grid_x < self.config['GRID_W'] and grid_y < self.config['GRID_H']:
 
-                        box = [center_x, center_y, center_w, center_h]
-
-                        # find the anchor that best predicts this box
-                        best_anchor = -1
-                        max_iou     = -1
-
-                        shifted_box = BoundBox(0,
-                                               0,
-                                               center_w,
-                                               center_h)
-
-                        for i in range(len(self.anchors)):
-                            anchor = self.anchors[i]
-                            iou    = bbox_iou(shifted_box, anchor)
-
-                            if max_iou < iou:
-                                best_anchor = i
-                                max_iou     = iou
-
-                        # assign ground truth x, y, w, h, confidence and class probs to y_batch
-                        y_batch[instance_count, grid_y, grid_x, best_anchor, 0:4] = box
-                        y_batch[instance_count, grid_y, grid_x, best_anchor, 4  ] = 1.
-
-                        # assign the true box to b_batch
-                        b_batch[instance_count, 0, 0, 0, true_box_index] = box
-
-                        true_box_index += 1
-                        true_box_index = true_box_index % self.config['TRUE_BOX_BUFFER']
+                    # assign ground truth x, y, w, h, confidence and class probs to y_batch
+                    y_batch[instance_count, grid_y, grid_x, 0:2] = center_x, center_y # coord
+                    y_batch[instance_count, grid_y, grid_x,   2] = 1.  # confidence
 
             # assign input image to x_batch
             x_batch[instance_count] = self.norm(img)
 
-        return [x_batch, b_batch], y_batch
+        return x_batch, y_batch
 
     def on_epoch_end(self):
         if self.shuffle: np.random.shuffle(self.images)
@@ -162,8 +129,11 @@ class YOLO_BatchGenerator(Sequence):
             image = image[offy : (offy + h), offx : (offx + w)]
 
             ### flip the image
-            flip = np.random.binomial(1, .5)
-            if flip > 0.5: image = cv2.flip(image, 1)
+            hflip = np.random.binomial(1, .5)
+            if hflip > 0.5: image = cv2.flip(image, 1)
+
+            vflip = np.random.binomial(1, .5)
+            if vflip > 0.5: image = cv2.flip(image, 0)
 
             image = self.aug_pipe.augment_image(image)
 
@@ -172,22 +142,21 @@ class YOLO_BatchGenerator(Sequence):
 
         # fix object's position and size
         for obj in all_objs:
-            for attr in ['xmin', 'xmax']:
-                if jitter: obj[attr] = int(obj[attr] * scale - offx)
+            if jitter: obj['x_center'] = int(obj['x_center'] * scale - offx)
 
-                obj[attr] = int(obj[attr] * float(self.config['IMAGE_W']) / w)
-                obj[attr] = max(min(obj[attr], self.config['IMAGE_W']), 0)
+            obj['x_center'] = int(obj['x_center'] * float(self.config['IMAGE_W']) / w)
+            obj['x_center'] = max(min(obj['x_center'], self.config['IMAGE_W']), 0)
 
-            for attr in ['ymin', 'ymax']:
-                if jitter: obj[attr] = int(obj[attr] * scale - offy)
+            if jitter: obj['y_center'] = int(obj['y_center'] * scale - offy)
 
-                obj[attr] = int(obj[attr] * float(self.config['IMAGE_H']) / h)
-                obj[attr] = max(min(obj[attr], self.config['IMAGE_H']), 0)
+            obj['y_center'] = int(obj['y_center'] * float(self.config['IMAGE_H']) / h)
+            obj['y_center'] = max(min(obj['y_center'], self.config['IMAGE_H']), 0)
 
-            if jitter and flip > 0.5:
-                xmin = obj['xmin']
-                obj['xmin'] = self.config['IMAGE_W'] - obj['xmax']
-                obj['xmax'] = self.config['IMAGE_W'] - xmin
+            if jitter and hflip > 0.5:
+                obj['x_center'] = self.config['IMAGE_W'] - obj['x_center']
+
+            if jitter and vflip > 0.5:
+                obj['y_center'] = self.config['IMAGE_H'] - obj['y_center']
 
         return image, all_objs
 ### end YOLO generator

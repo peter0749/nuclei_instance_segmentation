@@ -3,7 +3,7 @@ import numpy as np
 from tqdm import tqdm
 import glob
 from get_image_size import get_image_size
-from skimage.measure import regionprops
+from scipy import ndimage 
 import copy
 import cv2
 '''
@@ -29,8 +29,8 @@ def dataset_filepath(root, get_masks=True):
             for mask_path in glob.glob(subdir+'/masks/*.png'):
                 mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
                 assert mask.ndim == 2
-                (ymin, xmin, ymax, xmax) = regionprops((mask>0).astype(np.int32), cache=True)[0].bbox
-                image['masks'].append({'mask': mask_path, 'ymin': ymin, 'xmin': xmin, 'ymax': ymax, 'xmax': xmax}) # get bounding box
+                (y_center, x_center) = ndimage.measurements.center_of_mass( (mask>0).astype(np.int32) )
+                image['masks'].append({'mask': mask_path, 'y_center': y_center, 'x_center': x_center}) # get bounding box
 
         dir_list.append(image)
     return dir_list
@@ -51,6 +51,6 @@ def dir_reader(img_meta_wo_markers, height, width):
     return input_images, original_images, image_filenames # return resized images and their original shapes, and orignal images
 
 if __name__ == '__main__':
-    l = dataset_filepath('./stage1_train')
+    l = dataset_filepath(conf.DATA_PATH)
     print(l)
 

@@ -22,7 +22,6 @@ def get_yolo_model(gpus=1, load_weights=None, verbose=False):
     import keras.backend as K
 
     input_image = Input(shape=(conf.YOLO_DIM, conf.YOLO_DIM, 3))
-    true_boxes  = Input(shape=(1, 1, 1, conf.TRUE_BOX_BUFFER , 4))
 
     # Layer 1
     x = Conv2D(32, (3,3), strides=(1,1), padding='same', name='conv_1', kernel_initializer='he_normal', use_bias=False)(input_image)
@@ -146,16 +145,15 @@ def get_yolo_model(gpus=1, load_weights=None, verbose=False):
     x = LeakyReLU(alpha=0.1)(x)
 
     # Layer 23
-    x = Conv2D(conf.BOX * (4 + 1), (1,1), strides=(1,1), padding='same', name='conv_23', kernel_initializer='he_normal')(x)
-    output = Reshape((conf.YOLO_GRID, conf.YOLO_GRID, conf.BOX, 4 + 1))(x)
+    x = Conv2D(2 + 1, (1,1), strides=(1,1), padding='same', name='conv_23', kernel_initializer='he_normal')(x)
+    output = Reshape((conf.YOLO_GRID, conf.YOLO_GRID, 2 + 1))(x)
 
     # small hack to allow true_boxes to be registered when Keras build the model
     # for more information: https://github.com/fchollet/keras/issues/2790
-    output = Lambda(lambda args: args[0])([output, true_boxes])
     optimizer = Adam(**conf.YOLO_OPT_ARGS)
     with tf.device('/cpu:0'): ## prevent OOM error
-        cpu_model = Model([input_image, true_boxes], output)
-        cpu_model.compile(loss=losses.yolo_loss(true_boxes), optimizer=optimizer)
+        cpu_model = Model(input_image, output)
+        cpu_model.compile(loss=losses.yolo_loss, optimizer=optimizer)
         if conf.YOLO_PRETRAINED is not None and os.path.exists(conf.YOLO_PRETRAINED): # load yolo pretrained weights
             weight_reader = WeightReader(conf.YOLO_PRETRAINED)
             weight_reader.reset()
@@ -203,7 +201,7 @@ def get_yolo_model(gpus=1, load_weights=None, verbose=False):
                 print('Loaded weights')
     if gpus>=2:
         gpu_model = multi_gpu_model(cpu_model, gpus=gpus)
-        gpu_model.compile(loss=losses.yolo_loss(true_boxes), optimizer=optimizer)
+        gpu_model.compile(loss=losses.yolo_loss, optimizer=optimizer)
         return gpu_model, cpu_model
     return cpu_model, cpu_model
 ### end Yolo model
