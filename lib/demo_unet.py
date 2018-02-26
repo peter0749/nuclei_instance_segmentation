@@ -42,7 +42,8 @@ for img in tqdm(train_imgs, total=len(train_imgs)):
         mask = np.maximum(mask, real_region)
     mask = cv2.resize(mask, (conf.U_NET_DIM, conf.U_NET_DIM))
     masks.append((mask>128).astype(np.bool))
-    names.append(img['image'])
+    _, f = os.path.split(img['image'])
+    names.append(f)
 
 imgs = np.array(imgs).astype(np.float32) / 255. # normalize
 print('data shape: %s'%(str(imgs.shape)))
