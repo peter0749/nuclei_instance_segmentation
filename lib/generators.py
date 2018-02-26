@@ -270,7 +270,7 @@ class U_NET_BatchGenerator(Sequence):
 
         mask = np.zeros((*image.shape[:2], 1), dtype=np.uint8)
         for maskinfo in train_instance['masks']:
-            mask_  = cv2.imread(maskinfo['mask'], cv2.IMREAD_GRAYSCALE)
+            mask_  = np.expand_dims(cv2.imread(maskinfo['mask'], cv2.IMREAD_GRAYSCALE), -1)
             assert mask_ is not None
             mask = np.maximum(mask, mask_)
 

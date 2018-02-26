@@ -6,119 +6,6 @@ import metrics
 import numpy as np
 from utils import WeightReader
 
-
-# U-Yolo 
-def get_uyolo_model(gpus=1, load_weights=None, verbose=False):
-    from keras.models import Model, load_model
-    from keras.layers import Input, Add, Activation, BatchNormalization, Reshape
-    from keras.layers.core import Dropout, Lambda
-    from keras.layers.convolutional import Conv2D, Conv2DTranspose
-    from keras.layers.pooling import MaxPooling2D
-    from keras.layers.merge import concatenate
-    from keras.callbacks import EarlyStopping, ModelCheckpoint
-    from keras.optimizers import SGD, Adam, RMSprop
-    from keras.utils.training_utils import multi_gpu_model
-    from keras import backend as K
-    import tensorflow as tf
-
-    def conv(f, k=3, act='elu'):
-        return Conv2D(f, (k, k), activation=act, kernel_initializer='he_normal', padding='same')
-    def _incept_conv(inputs, f, chs=[0.15, 0.5, 0.25, 0.1]):
-        fs = [] # determine channel number
-        for k in chs:
-            t = max(int(k*f), 1) # at least 1 channel
-            fs.append(t)
-
-        fs[1] += f-np.sum(fs) # reminding channels allocate to 3x3 conv
-
-        c1x1 = conv(fs[0], 1, act='linear') (inputs)
-        c3x3 = conv(max(1, fs[1]//2), 1, act='elu') (inputs)
-        c5x5 = conv(max(1, fs[2]//2), 1, act='elu') (inputs)
-        cpool= MaxPooling2D(pool_size=(3, 3), strides=(1, 1), padding='same') (inputs)
-
-        c3x3 = conv(fs[1], 3, act='linear') (c3x3)
-        c5x5 = conv(fs[2], 5, act='linear') (c5x5)
-        cpool= conv(fs[3], 1, act='linear') (cpool)
-
-        output = concatenate([c1x1, c3x3, c5x5, cpool], axis=-1)
-        return output
-
-    def _res_conv(inputs, f, k=3): # very simple residual module
-        channels = int(inputs.shape[-1])
-
-        cs = _incept_conv(inputs, f)
-
-        if f!=channels:
-            t1 = conv(f, 1, 'linear') (inputs) # identity mapping
-        else:
-            t1 = inputs
-
-        out = Add()([t1, cs]) # t1 + c2
-        out = BatchNormalization() (out)
-        out = Activation('elu') (out)
-        return out
-    def pool():
-        return MaxPooling2D((2, 2))
-    def up(inputs):
-        return Conv2DTranspose(int(inputs.shape[-1]), (2, 2), strides=(2, 2), padding='same') (inputs)
-
-    input_image = Input(shape=(conf.U_YOLO_DIM, conf.U_YOLO_DIM, 3))
-    true_boxes  = Input(shape=(1, 1, 1, conf.TRUE_BOX_BUFFER , 4))
-
-    c1 = _res_conv(input_image, 32, 3) # 608x608
-    c1 = _res_conv(c1, 32, 3)
-    p1 = pool() (c1)
-
-    c2 = _res_conv(p1, 64, 3) # 304x304
-    c2 = _res_conv(c2, 64, 3)
-    p2 = pool() (c2)
-
-    c3 = _res_conv(p2, 128, 3) # 152x152
-    c3 = _res_conv(c3, 128, 3)
-    p3 = pool() (c3)
-
-    c4 = _res_conv(p3, 256, 3) # 76x76
-    c4 = _res_conv(c4, 256, 3)
-    p4 = pool() (c4)
-
-    c5 = _res_conv(p4, 512, 3) # 38x38
-    c5 = _res_conv(c5, 512, 3)
-    p5 = pool() (c5)
-
-    c6 = _res_conv(p5, 512, 3) # 19x19
-    c6 = _res_conv(c6, 512, 3)
-
-    u7 = up (c6) # 38x38
-    c7 = concatenate([u7, c5])
-    c7 = _res_conv(c7, 512, 3)
-    c7 = _res_conv(c7, 512, 3)
-
-    u8 = up (c7) # 76x76
-    c8 = concatenate([u8, c4])
-    c8 = _res_conv(c8, 512, 3)
-    c8 = _res_conv(c8, 512, 3)
-
-    x = Conv2D(conf.U_YOLO_BOX * (4 + 1), (1,1), strides=(1,1), padding='same', kernel_initializer='he_normal')(c8)
-    output = Reshape((conf.U_YOLO_GRID, conf.U_YOLO_GRID, conf.U_YOLO_BOX, 4 + 1))(x)
-
-    # small hack to allow true_boxes to be registered when Keras build the model
-    # for more information: https://github.com/fchollet/keras/issues/2790
-    output = Lambda(lambda args: args[0])([output, true_boxes])
-    optimizer = Adam(**conf.U_YOLO_OPT_ARGS)
-    with tf.device('/cpu:0'): ## prevent OOM error
-        cpu_model = Model([input_image, true_boxes], output)
-        cpu_model.compile(loss=losses.uyolo_loss(true_boxes), optimizer=optimizer)
-        if load_weights is not None and os.path.exists(load_weights):
-            cpu_model.load_weights(load_weights)
-            if verbose:
-                print('Loaded weights')
-    if gpus>=2:
-        gpu_model = multi_gpu_model(cpu_model, gpus=gpus)
-        gpu_model.compile(loss=losses.uyolo_loss(true_boxes), optimizer=optimizer)
-        return gpu_model, cpu_model
-    return cpu_model, cpu_model
-### end uYolo model
-
 ### Yolo model:
 
 def get_yolo_model(gpus=1, load_weights=None, verbose=False):
@@ -324,8 +211,8 @@ def get_yolo_model(gpus=1, load_weights=None, verbose=False):
 ### U-Net:
 def get_U_Net_model(gpus=1, load_weights=None, verbose=False):
     from keras.models import Model, load_model
-    from keras.layers import Input, Add, Activation
-    from keras.layers.core import Dropout, Lambda
+    from keras.layers import Input, Add, Activation, BatchNormalization
+    from keras.layers.core import Lambda
     from keras.layers.convolutional import Conv2D, Conv2DTranspose
     from keras.layers.pooling import MaxPooling2D
     from keras.layers.merge import concatenate
@@ -341,7 +228,7 @@ def get_U_Net_model(gpus=1, load_weights=None, verbose=False):
 
     def conv(f, k=3, act='elu'):
         return Conv2D(f, (k, k), activation=act, kernel_initializer='he_normal', padding='same')
-    def _incept_conv(inputs, f, dropout=0, chs=[0.15, 0.5, 0.25, 0.1]):
+    def _incept_conv(inputs, f, chs=[0.15, 0.5, 0.25, 0.1]):
         fs = [] # determine channel number
         for k in chs:
             t = max(int(k*f), 1) # at least 1 channel
@@ -359,14 +246,12 @@ def get_U_Net_model(gpus=1, load_weights=None, verbose=False):
         cpool= conv(fs[3], 1, act='linear') (cpool)
 
         output = concatenate([c1x1, c3x3, c5x5, cpool], axis=-1)
-        if dropout>0:
-            output = Dropout(dropout) (output)
         return output
 
-    def _res_conv(inputs, f, k=3, dropout=0.1): # very simple residual module
+    def _res_conv(inputs, f, k=3): # very simple residual module
         channels = int(inputs.shape[-1])
 
-        cs = _incept_conv(inputs, f, dropout=dropout)
+        cs = _incept_conv(inputs, f)
 
         if f!=channels:
             t1 = conv(f, 1, 'linear') (inputs) # identity mapping
@@ -374,14 +259,13 @@ def get_U_Net_model(gpus=1, load_weights=None, verbose=False):
             t1 = inputs
 
         out = Add()([t1, cs]) # t1 + c2
+        out = BatchNormalization() (out)
         out = Activation('elu') (out)
         return out
     def pool():
         return MaxPooling2D((2, 2))
-    def up(inputs, dropout=0):
+    def up(inputs):
         upsampled = Conv2DTranspose(int(inputs.shape[-1]), (2, 2), strides=(2, 2), padding='same') (inputs)
-        if dropout>0:
-            upsampled = Dropout(dropout) (upsampled)
         return upsampled
 
     inputs = Input((IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS))
