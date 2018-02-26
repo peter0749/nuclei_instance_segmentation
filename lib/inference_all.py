@@ -15,7 +15,7 @@ import reader
 import config as conf
 from sklearn.model_selection import train_test_split
 from generators import YOLO_BatchGenerator
-from utils import decode_netout, draw_boxes, rle_encoding, prob_to_rles
+from utils import decode_netout, draw_dots, rle_encoding, prob_to_rles
 import cv2
 
 print('Loading trained weights...')
