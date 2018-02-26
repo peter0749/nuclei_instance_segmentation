@@ -8,158 +8,8 @@ from imgaug import augmenters as iaa
 from keras.utils import Sequence
 from utils import BoundBox, normalize
 from reader import dataset_filepath
+from scipy import ndimage
 import config as conf
-
-### YOLO generator
-class YOLO_BatchGenerator(Sequence):
-    def __init__(self, images,
-                       config,
-                       shuffle=True,
-                       jitter=True,
-                       norm=None):
-        self.generator = None
-
-        self.images = images
-        self.config = config
-
-        self.shuffle = shuffle
-        self.jitter  = jitter
-        self.norm    = norm
-
-        ### augmentors by https://github.com/aleju/imgaug
-        sometimes = lambda aug: iaa.Sometimes(0.5, aug)
-
-        # Define our sequence of augmentation steps that will be applied to every image
-        # All augmenters with per_channel=0.5 will sample one value _per image_
-        # in 50% of all cases. In all other cases they will sample new values
-        # _per channel_.
-        self.aug_pipe = iaa.Sequential(
-            [
-                # apply the following augmenters to most images
-                # execute 0 to 5 of the following (less important) augmenters per image
-                # don't execute all of them, as that would often be way too strong
-                iaa.SomeOf((0, 5),
-                    [
-                        iaa.OneOf([
-                            iaa.GaussianBlur((0, 3.0)), # blur images with a sigma between 0 and 3.0
-                            iaa.AverageBlur(k=(2, 7)), # blur image using local means with kernel sizes between 2 and 7
-                            iaa.MedianBlur(k=(3, 11)), # blur image using local medians with kernel sizes between 2 and 7
-                        ]),
-                        iaa.Sharpen(alpha=(0, 1.0), lightness=(0.75, 1.5)), # sharpen images
-                        iaa.AdditiveGaussianNoise(loc=0, scale=(0.0, 0.05*255), per_channel=0.5), # add gaussian noise to images
-                        iaa.OneOf([
-                            iaa.Dropout((0.01, 0.1), per_channel=0.5), # randomly remove up to 10% of the pixels
-                        ]),
-                        iaa.Add((-10, 10), per_channel=0.5), # change brightness of images (by -10 to 10 of original value)
-                        iaa.Multiply((0.5, 1.5), per_channel=0.5), # change brightness of images (50-150% of original value)
-                        iaa.ContrastNormalization((0.5, 2.0), per_channel=0.5), # improve or worsen the contrast
-                    ],
-                    random_order=True
-                )
-            ],
-            random_order=True
-        )
-
-        if shuffle: np.random.shuffle(self.images)
-
-    def __len__(self):
-        return int(np.ceil(float(len(self.images))/self.config['BATCH_SIZE']))
-
-    def __getitem__(self, idx):
-        l_bound = idx*self.config['BATCH_SIZE']
-        r_bound = (idx+1)*self.config['BATCH_SIZE']
-
-        if r_bound > len(self.images):
-            r_bound = len(self.images)
-            l_bound = r_bound - self.config['BATCH_SIZE']
-
-        x_batch = np.zeros((r_bound - l_bound, self.config['IMAGE_H'], self.config['IMAGE_W'], 3))                         # input images
-        y_batch = np.zeros((r_bound - l_bound, self.config['GRID_H'],  self.config['GRID_W'], 2+1))                # desired network output
-
-        for instance_count, train_instance in enumerate(self.images[l_bound:r_bound]):
-            # augment input image and fix object's position and size
-            img, all_objs = self.aug_image(train_instance, jitter=self.jitter)
-
-            # construct output from object's x, y, w, h
-            true_box_index = 0
-
-            for obj in all_objs:
-                center_x = obj['x_center'] / (float(self.config['IMAGE_W']) / self.config['GRID_W'])
-                center_y = obj['y_center'] / (float(self.config['IMAGE_H']) / self.config['GRID_H'])
-
-                grid_x = int(np.floor(center_x))
-                grid_y = int(np.floor(center_y))
-
-                if grid_x < self.config['GRID_W'] and grid_y < self.config['GRID_H']:
-
-                    # assign ground truth x, y, w, h, confidence and class probs to y_batch
-                    y_batch[instance_count, grid_y, grid_x, 0:2] = center_x, center_y # coord
-                    y_batch[instance_count, grid_y, grid_x,   2] = 1.  # confidence
-
-            # assign input image to x_batch
-            x_batch[instance_count] = self.norm(img)
-
-        return x_batch, y_batch
-
-    def on_epoch_end(self):
-        if self.shuffle: np.random.shuffle(self.images)
-
-    def aug_image(self, train_instance, jitter):
-        image_name = train_instance['image']
-        image = cv2.imread(image_name, cv2.IMREAD_COLOR)[...,:3]
-        image = image[...,::-1] ## BGR -> RGB
-
-        if image is None: print('Cannot find ' + str(image_name))
-
-        h, w, c = image.shape
-        assert h==train_instance['height'] and w==train_instance['width']
-        all_objs = copy.deepcopy(train_instance['masks'])
-
-        if jitter:
-            ### scale the image
-            scale = np.random.uniform() / 10. + 1.
-            image = cv2.resize(image, (0,0), fx = scale, fy = scale)
-
-            ### translate the image
-            max_offx = (scale-1.) * w
-            max_offy = (scale-1.) * h
-            offx = int(np.random.uniform() * max_offx)
-            offy = int(np.random.uniform() * max_offy)
-
-            image = image[offy : (offy + h), offx : (offx + w)]
-
-            ### flip the image
-            hflip = np.random.binomial(1, .5)
-            if hflip > 0.5: image = cv2.flip(image, 1)
-
-            vflip = np.random.binomial(1, .5)
-            if vflip > 0.5: image = cv2.flip(image, 0)
-
-            image = self.aug_pipe.augment_image(image)
-
-        # resize the image to standard size
-        image = cv2.resize(image, (self.config['IMAGE_H'], self.config['IMAGE_W']))
-
-        # fix object's position and size
-        for obj in all_objs:
-            if jitter: obj['x_center'] = int(obj['x_center'] * scale - offx)
-
-            obj['x_center'] = int(obj['x_center'] * float(self.config['IMAGE_W']) / w)
-            obj['x_center'] = max(min(obj['x_center'], self.config['IMAGE_W']), 0)
-
-            if jitter: obj['y_center'] = int(obj['y_center'] * scale - offy)
-
-            obj['y_center'] = int(obj['y_center'] * float(self.config['IMAGE_H']) / h)
-            obj['y_center'] = max(min(obj['y_center'], self.config['IMAGE_H']), 0)
-
-            if jitter and hflip > 0.5:
-                obj['x_center'] = self.config['IMAGE_W'] - obj['x_center']
-
-            if jitter and vflip > 0.5:
-                obj['y_center'] = self.config['IMAGE_H'] - obj['y_center']
-
-        return image, all_objs
-### end YOLO generator
 
 ### U-Net generator ###
 class U_NET_BatchGenerator(Sequence):
@@ -224,16 +74,18 @@ class U_NET_BatchGenerator(Sequence):
             l_bound = r_bound - self.config['BATCH_SIZE']
 
         x_batch = np.zeros((r_bound - l_bound, self.config['IMAGE_H'], self.config['IMAGE_W'], 3))                         # input images
-        y_batch = np.zeros((r_bound - l_bound, self.config['IMAGE_H'], self.config['IMAGE_W'], 1))                # desired network output
+        y0_batch = np.zeros((r_bound - l_bound, self.config['IMAGE_H'], self.config['IMAGE_W'], 1))                # desired network output
+        y1_batch = np.zeros((r_bound - l_bound, self.config['IMAGE_H'], self.config['IMAGE_W'], 1))                # desired network output
 
         for instance_count, train_instance in enumerate(self.images[l_bound:r_bound]):
             # augment input image and fix object's position and size
-            img, lab = self.aug_image(train_instance, jitter=self.jitter)
+            img, lab, marker = self.aug_image(train_instance, jitter=self.jitter)
 
             x_batch[instance_count,...]   = self.norm(img)
-            y_batch[instance_count,...,0] = lab
+            y0_batch[instance_count,...,0] = lab
+            y1_batch[instance_count,...,0] = marker
 
-        return x_batch, y_batch
+        return x_batch, [y0_batch, y1_batch]
 
     def on_epoch_end(self):
         if self.shuffle: np.random.shuffle(self.images)
@@ -244,18 +96,22 @@ class U_NET_BatchGenerator(Sequence):
         assert image is not None
         image = image[...,::-1] ## BGR -> RGB
 
-        mask = np.zeros((*image.shape[:2], 1), dtype=np.uint8)
-        for maskinfo in train_instance['masks']:
-            mask_  = np.expand_dims(cv2.imread(maskinfo['mask'], cv2.IMREAD_GRAYSCALE), -1)
+        marker = np.zeros(image.shape[:2], dtype=np.uint8)
+        mask   = np.zeros(image.shape[:2], dtype=np.uint8)
+        for maskpath in train_instance['masks']:
+            mask_  = cv2.imread(maskpath, cv2.IMREAD_GRAYSCALE)
             assert mask_ is not None
+            col, row = list(map(int, list(ndimage.measurements.center_of_mass(mask_)))) # col, row
+            cv2.circle(marker, (row, col), int(math.ceil(np.max(mask_.shape)*0.01)), 255, -1)
             mask = np.maximum(mask, mask_)
 
         h, w, c = image.shape
 
         if jitter:
             seq_det = self.aug_pipe.to_deterministic()
-            image = seq_det.augment_image(image)
-            mask  = seq_det.augment_image( mask)
+            image   = seq_det.augment_image(image)
+            mask    = np.squeeze(seq_det.augment_image(np.expand_dims(mask,   -1)))
+            marker  = np.squeeze(seq_det.augment_image(np.expand_dims(marker, -1)))
 
             # random amplify each channel
             a = .1 # amptitude
@@ -273,6 +129,7 @@ class U_NET_BatchGenerator(Sequence):
         # resize the image to standard size
         image = cv2.resize(image, (self.config['IMAGE_H'], self.config['IMAGE_W'])) # shape: (IMAGE_H, IMAGE_W, 3)
         mask  = (cv2.resize(np.squeeze(mask) , (self.config['IMAGE_H'], self.config['IMAGE_W']))>128).astype(np.float32) # shape: (IMAGE_H, IMAGE_W)
+        marker  = (cv2.resize(np.squeeze(marker) , (self.config['IMAGE_H'], self.config['IMAGE_W']))>128).astype(np.float32) # shape: (IMAGE_H, IMAGE_W)
 
-        return image, mask
+        return image, mask, marker
 ### end U-Net generator ###

@@ -32,11 +32,11 @@ def softmax(x, axis=-1, t=-100.):
 
     return e_x / e_x.sum(axis, keepdims=True)
 
-def draw_dots(image_, boxes):
+def draw_dots(image_, boxes, radius):
     image = copy.deepcopy(image_)
     for box in boxes:
         x, y = int(box.x*image.shape[1]), int(box.y*image.shape[0])
-        cv2.circle(image, (x,y), conf.YOLO_DRAW_DOT_R, (0,255,0), -1) # Green
+        cv2.circle(image, (x,y), radius, (0,255,0), -1) # Green
     return image
 
 ### modified version for binary classification
@@ -138,6 +138,8 @@ class multi_gpu_ckpt(Callback):
 from scipy import ndimage as ndi
 from skimage.morphology import watershed
 # Run-length encoding from https://www.kaggle.com/rakhlin/fast-run-length-encoding-python
+# reference from basic-yolo-keras (https://github.com/experiencor/basic-yolo-keras/blob/master/utils.py)
+
 def rle_encoding(x):
     dots = np.where(x.T.flatten() == 1)[0]
     run_lengths = []
@@ -149,18 +151,22 @@ def rle_encoding(x):
     return run_lengths
 
 def lb(image, marker):
+    if np.sum(image) < np.sum(marker):
+        image = marker
+    else:
+        marker = np.array((marker==1) & (image==1))
     distance = ndi.distance_transform_edt(image)
-    labels = watershed(-distance, marker, mask=image)
+    markers = ndi.label(marker)[0]
+    labels = watershed(-distance, markers, mask=image)
     if np.sum(labels) == 0:
         labels[0,0] = 1
     return labels
 
 def prob_to_rles(x, marker, cutoff=0.5, cutoff_marker=0.5):
-    lab_img = lb(x > cutoff, marker)
+    lab_img = lb(x > cutoff, marker > cutoff_marker)
     for i in range(1, lab_img.max() + 1):
         yield rle_encoding(lab_img == i)
 
-# reference from basic-yolo-keras (https://github.com/experiencor/basic-yolo-keras/blob/master/utils.py)
 class WeightReader:
     def __init__(self, weight_file):
         self.offset = 4

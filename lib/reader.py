@@ -27,10 +27,7 @@ def dataset_filepath(root, get_masks=True):
         if get_masks:
             image['masks'] = []
             for mask_path in glob.glob(subdir+'/masks/*.png'):
-                mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
-                assert mask.ndim == 2
-                (y_center, x_center) = ndimage.measurements.center_of_mass( (mask>0).astype(np.int32) )
-                image['masks'].append({'mask': mask_path, 'y_center': y_center, 'x_center': x_center}) # get bounding box
+                image['masks'].append(mask_path) # get bounding box
 
         dir_list.append(image)
     return dir_list
@@ -38,17 +35,17 @@ def dataset_filepath(root, get_masks=True):
 def dir_reader(img_meta_wo_markers, height, width):
     l = len(img_meta_wo_markers)
     input_images = np.zeros((l,height, width, 3))
-    original_images  = []
     image_filenames  = []
+    size = []
     for i, img_meta in tqdm(enumerate(img_meta_wo_markers), total=l):
         img = cv2.imread(img_meta['image'], cv2.IMREAD_COLOR)[...,:3] # only BGR channels
         img = img[...,::-1] # BGR -> RGB
         img_input = cv2.resize(img, (width, height))
         img_input = img_input / 255.
         input_images[i,...] = img_input
-        original_images.append(img)
         image_filenames.append(img_meta['image'])
-    return input_images, original_images, image_filenames # return resized images and their original shapes, and orignal images
+        size.append((img_meta['width'], img_meta['height']))
+    return input_images, image_filenames, size # return resized images and their original shapes, and orignal images
 
 if __name__ == '__main__':
     l = dataset_filepath(conf.DATA_PATH)
