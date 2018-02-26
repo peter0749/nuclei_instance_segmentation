@@ -35,7 +35,7 @@ def draw_dots(image_, boxes):
     image = copy.deepcopy(image_)
     for box in boxes:
         x, y = int(box.x*image.shape[1]), int(box.y*image.shape[0])
-        cv2.circle(image, (x,y), conf.YOLO_DRAW_DOT_R, -1)
+        cv2.circle(image, (x,y), conf.YOLO_DRAW_DOT_R, (0,255,0), -1) # Green
     return image
 
 ### modified version for binary classification
