@@ -121,14 +121,14 @@ def get_U_Net_model(gpus=1, load_weights=None, verbose=False):
     optimizer = Adam(**conf.U_NET_OPT_ARGS)
     with tf.device('/cpu:0'): ## prevent OOM error
         cpu_model = Model(inputs=[inputs], outputs=[semantic_segmentation, markers])
-        cpu_model.compile(loss=losses.unet_loss, metrics=[metrics.mean_iou], optimizer=optimizer, loss_weights={'nuclei': 1, 'marker': 8})
+        cpu_model.compile(loss=losses.unet_loss, metrics=[metrics.mean_iou], optimizer=optimizer, loss_weights={'nuclei': 1, 'marker': conf.MARKER_W})
         if load_weights is not None and os.path.exists(load_weights):
             cpu_model.load_weights(load_weights)
             if verbose:
                 print('Loaded weights')
     if gpus>=2:
         gpu_model = multi_gpu_model(cpu_model, gpus=gpus)
-        gpu_model.compile(loss=losses.unet_loss, metrics=[metrics.mean_iou], optimizer=optimizer, loss_weights={'nuclei': 1, 'marker': 8})
+        gpu_model.compile(loss=losses.unet_loss, metrics=[metrics.mean_iou], optimizer=optimizer, loss_weights={'nuclei': 1, 'marker': conf.MARKER_W})
         return gpu_model, cpu_model
     return cpu_model, cpu_model
 ### end U-Net model
