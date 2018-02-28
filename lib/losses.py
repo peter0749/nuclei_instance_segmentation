@@ -3,10 +3,18 @@ import numpy as np
 import tensorflow as tf
 import keras.backend as K
 
-def unet_loss(y_true, y_pred):
-    from keras.losses import binary_crossentropy
-    from metrics import dice_coef
-    return .5 * binary_crossentropy(y_true, y_pred) - dice_coef(y_true, y_pred)
+def unet_loss(img_size):
+    def func(y_true, y_pred):
+        from keras.losses import binary_crossentropy
+        from metrics import dice_coef
+        d = dice_coef(y_true, y_pred)
+        b = K.mean(binary_crossentropy(y_true, y_pred))
+        loss = .5 * b - d
+        loss = tf.Print(loss, [d], message='\nDC:\t')
+        loss = tf.Print(loss, [b], message='CE:\t')
+        loss = tf.Print(loss, [tf.shape(y_true)], message='Shape:\t', summary=10)
+        return loss
+    return func
 
 def yolo_loss(true_boxes, img_size):
     YOLO_GRID = img_size // 32
@@ -137,10 +145,10 @@ def yolo_loss(true_boxes, img_size):
         Debugging code
         """
 
-        loss = tf.Print(loss, [loss_xy], message='\nLoss XY \t', summarize=1000)
-        loss = tf.Print(loss, [loss_wh], message='Loss WH \t', summarize=1000)
-        loss = tf.Print(loss, [loss_conf], message='Loss Conf \t', summarize=1000)
-        loss = tf.Print(loss, [loss_conf], message='Image size: %d x %d\t'%(img_size, img_size), summarize=1000)
+        loss = tf.Print(loss, [loss_xy], message='\nLoss XY \t', summarize=10)
+        loss = tf.Print(loss, [loss_wh], message='Loss WH \t', summarize=10)
+        loss = tf.Print(loss, [loss_conf], message='Loss Conf \t', summarize=10)
+        loss = tf.Print(loss, [tf.shape(y_true)], message='Shape:\t', summarize=10)
 
         return loss
     return func

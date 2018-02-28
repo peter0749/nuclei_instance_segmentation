@@ -5,7 +5,7 @@ SUBMISSION= '/hdd/home/peter0749/nuclei_instance_segmentation/submission.csv'
 VALID_SPLIT = 0.1
 
 # U-Net for semantic segmentation
-U_NET_DIM = 160
+U_NET_DIM = 96
 
 # YOLO step-by-step ref:
 # https://github.com/experiencor/basic-yolo-keras/blob/master/Yolo%20Step-by-Step.ipynb
@@ -26,8 +26,8 @@ YOLO_SHOW_CONF = False
 YOLO_USE_MULTI_GPU=2
 U_NET_USE_MULTI_GPU=2
 
-YOLO_BATCH_SIZE=4 ## each gpus's batch size = YOLO_BATCH_SIZE / YOLO_USE_MULTI_GPU
-U_NET_BATCH_SIZE=4
+YOLO_BATCH_SIZE=16 ## each gpus's batch size = YOLO_BATCH_SIZE / YOLO_USE_MULTI_GPU
+U_NET_BATCH_SIZE=16
 
 GENERATOR_WORKERS=5
 

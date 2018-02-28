@@ -327,14 +327,14 @@ def get_U_Net_model(img_size=conf.U_NET_DIM, gpus=1, load_weights=None, verbose=
     optimizer = Adam(**conf.U_NET_OPT_ARGS)
     with tf.device('/cpu:0'): ## prevent OOM error
         cpu_model = Model(inputs=[inputs], outputs=[outputs])
-        cpu_model.compile(loss=losses.unet_loss, metrics=[metrics.mean_iou], optimizer=optimizer)
+        cpu_model.compile(loss=losses.unet_loss(img_size), metrics=[metrics.mean_iou], optimizer=optimizer)
         if load_weights is not None and os.path.exists(load_weights):
             cpu_model.load_weights(load_weights)
             if verbose:
                 print('Loaded weights')
     if gpus>=2:
         gpu_model = multi_gpu_model(cpu_model, gpus=gpus)
-        gpu_model.compile(loss=losses.unet_loss, metrics=[metrics.mean_iou], optimizer=optimizer)
+        gpu_model.compile(loss=losses.unet_loss(img_size), metrics=[metrics.mean_iou], optimizer=optimizer)
         return gpu_model, cpu_model
     return cpu_model, cpu_model
 ### end U-Net model
