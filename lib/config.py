@@ -1,7 +1,7 @@
 # ROOT TO DATASET (DATA & TEST)
-DATA_PATH = '/home/applyACC/persons/peter0749/stage1_train' # this will split into training/validation
-TEST_PATH = '/home/applyACC/persons/peter0749/stage1_test'
-SUBMISSION= '/home/applyACC/persons/peter0749/nuclei_instance_segmentation/submission.csv'
+DATA_PATH = '/hdd/dataset/nuclei_dataset/stage1_train' # this will split into training/validation
+TEST_PATH = '/hdd/dataset/nuclei_dataset/stage1_test'
+SUBMISSION= '/hdd/home/peter0749/nuclei_instance_segmentation/submission.csv'
 VALID_SPLIT = 0.1
 
 # U-Net for semantic segmentation
@@ -37,10 +37,10 @@ U_NET_EPOCHS=1200
 YOLO_CH_DIM_EPOCHS=10
 U_NET_CH_DIM_EPOCHS=10
 
-YOLO_CKPT = '/home/applyACC/persons/peter0749/yolo_weights'
-YOLO_PRETRAINED = '/home/applyACC/persons/peter0749/yolo.weights'
+YOLO_CKPT = '/hdd/dataset/nuclei_dataset/yolo_weights'
+YOLO_PRETRAINED = '/hdd/dataset/nuclei_dataset/yolo.weights'
 
-U_NET_CKPT = '/home/applyACC/persons/peter0749/unet_weights'
+U_NET_CKPT = '/hdd/dataset/nuclei_dataset/unet_weights'
 
 YOLO_OPT_ARGS = {
     'lr'              : 1e-5,
@@ -57,8 +57,8 @@ YOLO_MAX_LOSS = 10 # This prevent nans. If your loss is not chaning, then set a 
 YOLO_EARLY_STOP = 50
 U_NET_EARLY_STOP = 50
 
-YOLO_OUT_DIR = '/home/applyACC/persons/peter0749/detection_output'
-U_NET_OUT_DIR = '/home/applyACC/persons/peter0749/unet_out'
+YOLO_OUT_DIR = '/hdd/dataset/nuclei_dataset/detection_output'
+U_NET_OUT_DIR = '/hdd/dataset/nuclei_dataset/unet_out'
 
 ### !!! DO NOT EDIT THE CONFIGURATION BELOW !!! ###
 
