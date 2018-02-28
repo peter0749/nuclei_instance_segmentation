@@ -8,11 +8,12 @@ def unet_loss(y_true, y_pred):
     from metrics import dice_coef
     return .5 * binary_crossentropy(y_true, y_pred) - dice_coef(y_true, y_pred)
 
-def yolo_loss(true_boxes):
+def yolo_loss(true_boxes, img_size):
+    YOLO_GRID = img_size // 32
     def func(y_true, y_pred):
         mask_shape = tf.shape(y_true)[:4]
 
-        cell_x = tf.to_float(tf.reshape(tf.tile(tf.range(conf.YOLO_GRID), [conf.YOLO_GRID]), (1, conf.YOLO_GRID, conf.YOLO_GRID, 1, 1)))
+        cell_x = tf.to_float(tf.reshape(tf.tile(tf.range(YOLO_GRID), [YOLO_GRID]), (1, YOLO_GRID, YOLO_GRID, 1, 1)))
         cell_y = tf.transpose(cell_x, (0,2,1,3,4))
 
         cell_grid = tf.tile(tf.concat([cell_x,cell_y], -1), [conf.YOLO_BATCH_SIZE, 1, 1, conf.BOX, 1])
@@ -139,6 +140,7 @@ def yolo_loss(true_boxes):
         loss = tf.Print(loss, [loss_xy], message='\nLoss XY \t', summarize=1000)
         loss = tf.Print(loss, [loss_wh], message='Loss WH \t', summarize=1000)
         loss = tf.Print(loss, [loss_conf], message='Loss Conf \t', summarize=1000)
+        loss = tf.Print(loss, [loss_conf], message='Image size: %d x %d\t'%(img_size, img_size), summarize=1000)
 
         return loss
     return func

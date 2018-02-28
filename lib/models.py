@@ -8,7 +8,7 @@ from utils import WeightReader
 
 ### Yolo model:
 
-def get_yolo_model(gpus=1, load_weights=None, verbose=False):
+def get_yolo_model(img_size=608, gpus=1, load_weights=None, verbose=False):
     import tensorflow as tf
     def space_to_depth_x2(x):
         return tf.space_to_depth(x, block_size=2)
@@ -21,7 +21,9 @@ def get_yolo_model(gpus=1, load_weights=None, verbose=False):
     from keras.utils.training_utils import multi_gpu_model
     import keras.backend as K
 
-    input_image = Input(shape=(conf.YOLO_DIM, conf.YOLO_DIM, 3))
+    YOLO_GRID = conf.YOLO_GRID
+
+    input_image = Input(shape=(img_size, img_size, 3))
     true_boxes  = Input(shape=(1, 1, 1, conf.TRUE_BOX_BUFFER , 4))
 
     # Layer 1
@@ -147,7 +149,7 @@ def get_yolo_model(gpus=1, load_weights=None, verbose=False):
 
     # Layer 23
     x = Conv2D(conf.BOX * (4 + 1), (1,1), strides=(1,1), padding='same', name='conv_23', kernel_initializer='he_normal')(x)
-    output = Reshape((conf.YOLO_GRID, conf.YOLO_GRID, conf.BOX, 4 + 1))(x)
+    output = Reshape((img_size//32, img_size//32, conf.BOX, 4 + 1))(x)
 
     # small hack to allow true_boxes to be registered when Keras build the model
     # for more information: https://github.com/fchollet/keras/issues/2790
@@ -155,7 +157,7 @@ def get_yolo_model(gpus=1, load_weights=None, verbose=False):
     optimizer = Adam(**conf.YOLO_OPT_ARGS)
     with tf.device('/cpu:0'): ## prevent OOM error
         cpu_model = Model([input_image, true_boxes], output)
-        cpu_model.compile(loss=losses.yolo_loss(true_boxes), optimizer=optimizer)
+        cpu_model.compile(loss=losses.yolo_loss(true_boxes, img_size), optimizer=optimizer)
         if conf.YOLO_PRETRAINED is not None and os.path.exists(conf.YOLO_PRETRAINED): # load yolo pretrained weights
             weight_reader = WeightReader(conf.YOLO_PRETRAINED)
             weight_reader.reset()
@@ -190,8 +192,8 @@ def get_yolo_model(gpus=1, load_weights=None, verbose=False):
             layer   = cpu_model.layers[-4] # the last convolutional layer
             weights = layer.get_weights()
 
-            new_kernel = np.random.normal(size=weights[0].shape)/(conf.YOLO_GRID*conf.YOLO_GRID)
-            new_bias   = np.random.normal(size=weights[1].shape)/(conf.YOLO_GRID*conf.YOLO_GRID)
+            new_kernel = np.random.normal(size=weights[0].shape)/(YOLO_GRID*YOLO_GRID)
+            new_bias   = np.random.normal(size=weights[1].shape)/(YOLO_GRID*YOLO_GRID)
             layer.set_weights([new_kernel, new_bias])
 
             if verbose:
@@ -203,7 +205,7 @@ def get_yolo_model(gpus=1, load_weights=None, verbose=False):
                 print('Loaded weights')
     if gpus>=2:
         gpu_model = multi_gpu_model(cpu_model, gpus=gpus)
-        gpu_model.compile(loss=losses.yolo_loss(true_boxes), optimizer=optimizer)
+        gpu_model.compile(loss=losses.yolo_loss(true_boxes, img_size), optimizer=optimizer)
         return gpu_model, cpu_model
     return cpu_model, cpu_model
 ### end Yolo model

@@ -6,3 +6,4 @@ nohup.out
 *.csv
 *.png
 *.jpg
+*.log
