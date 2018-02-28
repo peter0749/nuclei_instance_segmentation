@@ -5,10 +5,9 @@ import keras.backend as K
 
 def unet_loss(img_size):
     def func(y_true, y_pred):
-        from keras.losses import binary_crossentropy
         from metrics import dice_coef
         d = dice_coef(y_true, y_pred)
-        b = K.mean(binary_crossentropy(y_true, y_pred))
+        b = K.mean(K.binary_crossentropy(y_true, y_pred))
         loss = .5 * b - d
         loss = tf.Print(loss, [d], message='\nDC:\t')
         loss = tf.Print(loss, [b], message='CE:\t')

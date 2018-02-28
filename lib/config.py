@@ -35,7 +35,7 @@ YOLO_EPOCHS=2000
 U_NET_EPOCHS=1200
 
 YOLO_CH_DIM_EPOCHS=10
-U_NET_CH_DIM_EPOCHS=10
+U_NET_CH_DIM_EPOCHS=2
 
 YOLO_CKPT = '/hdd/dataset/nuclei_dataset/yolo_weights'
 YOLO_PRETRAINED = '/hdd/dataset/nuclei_dataset/yolo.weights'
