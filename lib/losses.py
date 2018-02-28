@@ -12,7 +12,7 @@ def unet_loss(img_size):
         loss = .5 * b - d
         loss = tf.Print(loss, [d], message='\nDC:\t')
         loss = tf.Print(loss, [b], message='CE:\t')
-        loss = tf.Print(loss, [tf.shape(y_true)], message='Shape:\t', summary=10)
+        loss = tf.Print(loss, [tf.shape(y_true)], message='Shape:\t', summarize=10)
         return loss
     return func
 
