@@ -5,7 +5,7 @@ SUBMISSION= '/hdd/home/peter0749/nuclei_instance_segmentation/submission.csv'
 VALID_SPLIT = 0.1
 
 # U-Net for semantic segmentation
-U_NET_DIM = 64
+U_NET_DIM = 160
 
 # YOLO step-by-step ref:
 # https://github.com/experiencor/basic-yolo-keras/blob/master/Yolo%20Step-by-Step.ipynb
