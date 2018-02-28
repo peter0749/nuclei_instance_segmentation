@@ -1,7 +1,7 @@
 # ROOT TO DATASET (DATA & TEST)
-DATA_PATH = '/hdd/dataset/nuclei_dataset/stage1_train' # this will split into training/validation
-TEST_PATH = '/hdd/dataset/nuclei_dataset/stage1_test'
-SUBMISSION= '/hdd/home/peter0749/nuclei_instance_segmentation/submission.csv'
+DATA_PATH = '/home/applyACC/persons/peter0749/stage1_train' # this will split into training/validation
+TEST_PATH = '/home/applyACC/persons/peter0749/stage1_test'
+SUBMISSION= '/home/applyACC/persons/peter0749/nuclei_instance_segmentation/submission.csv'
 VALID_SPLIT = 0.1
 
 # U-Net for semantic segmentation
@@ -23,26 +23,25 @@ TRUE_BOX_BUFFER  = 50
 YOLO_DRAW_LINE_W = 1
 YOLO_SHOW_CONF = False
 
-YOLO_USE_MULTI_GPU=2
-U_NET_USE_MULTI_GPU=2
+YOLO_USE_MULTI_GPU=4
+U_NET_USE_MULTI_GPU=4
 
 YOLO_BATCH_SIZE=16 ## each gpus's batch size = YOLO_BATCH_SIZE / YOLO_USE_MULTI_GPU
-U_NET_BATCH_SIZE=32
+U_NET_BATCH_SIZE=8
 
-GENERATOR_WORKERS=5
+GENERATOR_WORKERS=11
 
 YOLO_EPOCHS=2000
 U_NET_EPOCHS=300
 
 YOLO_CH_DIM_EPOCHS=10
+U_NET_CH_DIM_EPOCHS=10
 
-YOLO_CKPT = '/hdd/dataset/nuclei_dataset/yolo_weights'
-YOLO_PRETRAINED = '/hdd/dataset/nuclei_dataset/yolo.weights'
+YOLO_CKPT = '/home/applyACC/persons/peter0749/yolo_weights'
+YOLO_PRETRAINED = '/home/applyACC/persons/peter0749/yolo.weights'
 
-U_NET_CKPT = '/hdd/dataset/nuclei_dataset/unet.h5'
+U_NET_CKPT = '/home/applyACC/persons/peter0749/unet_weights'
 
-YOLO_TFBOARD_DIR = '/hdd/dataset/nuclei_dataset/yolo_tfboard'
-U_NET_TFBOARD_DIR = '/hdd/dataset/nuclei_dataset/unet_tfboard'
 YOLO_OPT_ARGS = {
     'lr'              : 1e-5,
     'clipvalue'       : 0.1 ,
@@ -58,8 +57,8 @@ YOLO_MAX_LOSS = 10 # This prevent nans. If your loss is not chaning, then set a 
 YOLO_EARLY_STOP = 50
 U_NET_EARLY_STOP = 50
 
-YOLO_OUT_DIR = '/hdd/dataset/nuclei_dataset/detection_output'
-U_NET_OUT_DIR = '/hdd/dataset/nuclei_dataset/unet_out'
+YOLO_OUT_DIR = '/home/applyACC/persons/peter0749/detection_output'
+U_NET_OUT_DIR = '/home/applyACC/persons/peter0749/unet_out'
 
 ### !!! DO NOT EDIT THE CONFIGURATION BELOW !!! ###
 

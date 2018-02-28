@@ -8,7 +8,7 @@ from utils import WeightReader
 
 ### Yolo model:
 
-def get_yolo_model(img_size=608, gpus=1, load_weights=None, verbose=False):
+def get_yolo_model(img_size=conf.YOLO_DIM, gpus=1, load_weights=None, verbose=False):
     import tensorflow as tf
     def space_to_depth_x2(x):
         return tf.space_to_depth(x, block_size=2)
@@ -211,7 +211,7 @@ def get_yolo_model(img_size=608, gpus=1, load_weights=None, verbose=False):
 ### end Yolo model
 
 ### U-Net:
-def get_U_Net_model(gpus=1, load_weights=None, verbose=False):
+def get_U_Net_model(img_size=conf.U_NET_DIM, gpus=1, load_weights=None, verbose=False):
     from keras.models import Model, load_model
     from keras.layers import Input, Add, Activation
     from keras.layers.core import Dropout, Lambda
@@ -224,8 +224,8 @@ def get_U_Net_model(gpus=1, load_weights=None, verbose=False):
     from keras import backend as K
     import tensorflow as tf
 
-    IMG_WIDTH = conf.U_NET_DIM
-    IMG_HEIGHT= conf.U_NET_DIM
+    IMG_WIDTH = img_size
+    IMG_HEIGHT= img_size
     IMG_CHANNELS= 3
 
     def conv(f, k=3, act='elu'):
