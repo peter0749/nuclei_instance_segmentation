@@ -16,7 +16,7 @@ from generators import U_NET_BatchGenerator
 import cv2
 
 print('Loading trained weights...')
-unet_model, _ = models.get_U_Net_model(gpus=1, load_weights=conf.U_NET_CKPT)
+unet_model, _ = models.get_U_Net_model(img_size=conf.U_NET_DIM, gpus=1, load_weights=conf.U_NET_CKPT)
 unet_model.summary()
 
 print('Generating metadata...')
