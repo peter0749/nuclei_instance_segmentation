@@ -4,8 +4,6 @@ import glob
 import cv2
 import copy
 import numpy as np
-import imgaug as ia
-from imgaug import augmenters as iaa
 from keras.utils import Sequence
 from utils import normalize
 from reader import dataset_filepath
@@ -26,36 +24,6 @@ class U_NET_BatchGenerator(Sequence):
 
         self.jitter  = jitter
         self.norm    = norm
-
-        ### augmentors by https://github.com/aleju/imgaug
-        sometimes = lambda aug: iaa.Sometimes(0.5, aug)
-
-        # Define our sequence of augmentation steps that will be applied to every image
-        # All augmenters with per_channel=0.5 will sample one value _per image_
-        # in 50% of all cases. In all other cases they will sample new values
-        # _per channel_.
-        self.aug_pipe = iaa.Sequential(
-            [
-                iaa.Fliplr(0.5),
-                iaa.Flipud(0.5),
-                sometimes(iaa.CropAndPad(
-                    percent=(-0.05, 0.05),
-                    pad_mode='reflect',
-                    pad_cval=0
-                )),
-                sometimes(iaa.Affine(
-                    scale={"x": (0.9, 1.1), "y": (0.9, 1.1)}, # scale images to 80-120% of their size, individually per axis
-                    translate_percent={"x": (-0.1, 0.1), "y": (-0.1, 0.1)}, # translate by -20 to +20 percent (per axis)
-                    rotate=(-24, 24), # rotate by -45 to +45 degrees
-                    shear=(-3, 3), # shear by -16 to +16 degrees
-                    order=[0, 1], # use nearest neighbour or bilinear interpolation (fast)
-                    cval=0, # if mode is constant, use a cval between 0 and 255
-                    mode='reflect' # use any of scikit-image's warping modes (see 2nd image from the top for examples)
-                )),
-                sometimes(iaa.PiecewiseAffine(scale=(0.01, 0.04))), 
-            ],
-            random_order=True
-        )
 
         self.images = copy.deepcopy(images)
 
@@ -78,9 +46,9 @@ class U_NET_BatchGenerator(Sequence):
             img, lab, marker, dt = self.aug_image(train_instance, jitter=self.jitter)
 
             x_batch[instance_count,...]    = self.norm(img)
-            y0_batch[instance_count,...,0] = lab
-            y1_batch[instance_count,...,1] = marker
-            y2_batch[instance_count,...,2] = dt
+            y_batch[instance_count,...,0] = lab
+            y_batch[instance_count,...,1] = marker
+            y_batch[instance_count,...,2] = dt
 
         return x_batch, y_batch
 
@@ -88,6 +56,8 @@ class U_NET_BatchGenerator(Sequence):
         image_name = train_instance['image']
         image = cv2.imread(image_name, cv2.IMREAD_COLOR)[...,:3]
         assert image is not None
+        if np.max(image.shape[:2])>416 and np.random.rand()<.7:
+            image = cv2.resize(image, (416,416), interpolation=cv2.INTER_AREA)
         image = image[...,::-1] ## BGR -> RGB
 
         marker = np.zeros(image.shape[:2], dtype=np.bool)
@@ -95,7 +65,10 @@ class U_NET_BatchGenerator(Sequence):
         dt     = np.zeros(image.shape[:2], dtype=np.float32)
         r = max( image.shape[0], image.shape[1] ) * .009
         for maskpath in train_instance['masks']:
-            mask_  = (cv2.imread(maskpath, cv2.IMREAD_GRAYSCALE)>0).astype(np.bool)
+            mask_  = cv2.imread(maskpath, cv2.IMREAD_GRAYSCALE)
+            if mask_.shape != mask.shape:
+                mask_ = cv2.resize(mask_, mask.shape[::-1], interpolation=cv2.INTER_LINEAR)
+            mask_  = (mask_>0).astype(np.bool)
             assert mask_ is not None
             dt_   = ndi.distance_transform_edt(mask_).astype(np.float32)
             cY, cX = np.unravel_index(np.argmax(dt_, axis=None), dt_.shape) # find local maximum of edt image
@@ -113,11 +86,42 @@ class U_NET_BatchGenerator(Sequence):
         mask   = mask.astype(np.float32)
 
         if jitter:
-            seq_det = self.aug_pipe.to_deterministic()
-            image   = seq_det.augment_image(image)
-            mask    = np.squeeze(seq_det.augment_image(np.expand_dims(mask,   -1)))
-            marker  = np.squeeze(seq_det.augment_image(np.expand_dims(marker, -1)))
-            dt      = np.squeeze(seq_det.augment_image(np.expand_dims(dt, -1)))
+            if np.random.rand() < .5: # flip vertical
+                image = image[::-1,...]
+                mask  = mask[::-1,...]
+                marker= marker[::-1,...]
+                dt    = dt[::-1,...]
+            if np.random.rand() < .5: # flip horizonal
+                image = image[:,::-1,...]
+                mask  = mask[:,::-1]
+                marker= marker[:,::-1]
+                dt    = dt[:,::-1]
+            # rotation, shearing
+            if np.random.rand() < 0.5:
+                angle = np.random.uniform(-30,30)
+                cx = int(image.shape[1]//2)
+                cy = int(image.shape[0]//2)
+                M = cv2.getRotationMatrix2D((cx,cy),angle,1)
+                cos = np.abs(M[0, 0])
+                sin = np.abs(M[0, 1])
+                (h, w) = image.shape[:2]
+                # compute the new bounding dimensions of the image
+                nW = int((h * sin) + (w * cos))
+                nH = int((h * cos) + (w * sin))
+                # adjust the rotation matrix to take into account translation
+                M[0, 2] += (nW / 2) - cx
+                M[1, 2] += (nH / 2) - cy
+                image = np.clip(cv2.warpAffine(image, M, (nW, nH), flags=cv2.INTER_CUBIC if np.random.rand()<.1 else cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT_101), 0, 255)
+                mask = np.clip(cv2.warpAffine(mask, M, (nW, nH), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT_101), 0, 1)
+                marker = np.clip(cv2.warpAffine(marker, M, (nW, nH), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT_101), 0, 1)
+                dt = np.clip(cv2.warpAffine(dt, M, (nW, nH), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT_101), 0, 1)
+            if np.random.rand() < 0.3:
+                crop_ratio = np.random.uniform(0.01, 0.05, size=4)
+                u, r, d, l = np.round(crop_ratio * np.array([image.shape[0], image.shape[1]]*2)).astype(np.uint8)
+                image   = image[u:-d,l:-r] # crop image
+                mask    = mask[u:-d,l:-r] # crop image
+                marker  = marker[u:-d,l:-r] # crop image
+                dt      = dt[u:-d,l:-r] # crop image
 
             # random amplify each channel
             a = .1 # amptitude
