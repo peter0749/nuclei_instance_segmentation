@@ -47,13 +47,13 @@ class U_NET_BatchGenerator(Sequence):
                 sometimes(iaa.Affine(
                     scale={"x": (0.8, 1.2), "y": (0.8, 1.2)}, # scale images to 80-120% of their size, individually per axis
                     translate_percent={"x": (-0.2, 0.2), "y": (-0.2, 0.2)}, # translate by -20 to +20 percent (per axis)
-                    rotate=(-45, 45), # rotate by -45 to +45 degrees
-                    shear=(-16, 16), # shear by -16 to +16 degrees
+                    rotate=(-30, 30), # rotate by -45 to +45 degrees
+                    shear=(-3, 3), # shear by -16 to +16 degrees
                     order=[0, 1], # use nearest neighbour or bilinear interpolation (fast)
                     cval=0, # if mode is constant, use a cval between 0 and 255
                     mode='reflect' # use any of scikit-image's warping modes (see 2nd image from the top for examples)
                 )),
-                sometimes(iaa.PiecewiseAffine(scale=(0.01, 0.05))), 
+                sometimes(iaa.PiecewiseAffine(scale=(0.01, 0.04))), 
             ],
             random_order=True
         )
@@ -123,8 +123,15 @@ class U_NET_BatchGenerator(Sequence):
             image = image.astype(np.float32) / 255.
             image = np.clip(image * (1. + t), 0, 1) # channel wise amplify
             up = np.random.uniform(0.95, 1.05) # change gamma
-            image = np.clip(image**up * 255., 0, 255) # apply gamma and convert back to range [0,255]
+            image = np.clip(image**up, 0, 1)
+            # additive random noise
+            sigma = np.random.rand()*0.05
+            image = np.clip(image + np.random.randn(*image.shape)*sigma, 0, 1)
+            image = np.clip(image * 255, 0, 255) # apply gamma and convert back to range [0,255]
             image = image.astype(np.uint8) # convert back to uint8
+            if np.random.binomial(1, .05):
+                ksize = np.random.choice([3,5,7])
+                image = cv2.GaussianBlur(image, (ksize,ksize), 0)
 
         # resize the image to standard size
         image = cv2.resize(image, (self.config['IMAGE_H'], self.config['IMAGE_W'])) # shape: (IMAGE_H, IMAGE_W, 3)
