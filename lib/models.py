@@ -8,7 +8,7 @@ import numpy as np
 ### U-Net:
 def get_U_Net_model(gpus=1, load_weights=None, verbose=False):
     from keras.models import Model, load_model
-    from keras.layers import Input, Add, Activation, BatchNormalization
+    from keras.layers import Input, Add, Activation, Dropout
     from keras.layers.core import Lambda
     from keras.layers.convolutional import Conv2D, Conv2DTranspose
     from keras.layers.pooling import MaxPooling2D
@@ -56,8 +56,8 @@ def get_U_Net_model(gpus=1, load_weights=None, verbose=False):
             t1 = inputs
 
         out = Add()([t1, cs]) # t1 + c2
-        out = BatchNormalization() (out)
         out = Activation('elu') (out)
+        out = Dropout(0.2) (out)
         return out
     def pool():
         return MaxPooling2D((2, 2))
