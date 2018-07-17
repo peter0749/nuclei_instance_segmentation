@@ -125,7 +125,7 @@ class U_NET_BatchGenerator(Sequence):
             up = np.random.uniform(0.95, 1.05) # change gamma
             image = np.clip(image**up, 0, 1)
             # additive random noise
-            sigma = np.random.rand()*0.05
+            sigma = np.random.rand()*0.03
             image = np.clip(image + np.random.randn(*image.shape)*sigma, 0, 1)
             image = np.clip(image * 255, 0, 255) # apply gamma and convert back to range [0,255]
             image = image.astype(np.uint8) # convert back to uint8
