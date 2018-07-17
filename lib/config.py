@@ -1,8 +1,8 @@
 # ROOT TO DATASET (DATA & TEST)
-DATA_PATH = '/hdd/dataset/nuclei_dataset/stage1_train' # this will split into training/validation
+TRAIN_PATH = '/hdd/dataset/nuclei_dataset/stage1_train'
+VALID_PATH = '/hdd/dataset/nuclei_dataset/stage1_valid'
 TEST_PATH = '/hdd/dataset/nuclei_dataset/stage1_test'
 SUBMISSION= '/hdd/home/peter0749/nuclei_instance_segmentation/submission.csv'
-VALID_SPLIT = 0.1
 
 # U-Net for semantic segmentation
 U_NET_DIM = 256

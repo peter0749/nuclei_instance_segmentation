@@ -7,7 +7,6 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
 import models
 import reader
 import config as conf
-from sklearn.model_selection import train_test_split
 from utils import normalize, multi_gpu_ckpt
 from generators import U_NET_BatchGenerator
 
@@ -15,11 +14,11 @@ unet_model, base_model = models.get_U_Net_model(gpus=conf.U_NET_USE_MULTI_GPU, l
 unet_model.summary()
 
 print('Generating metadata...')
-train_imgs = reader.dataset_filepath(conf.DATA_PATH)
-train_imgs, val_imgs = train_test_split(train_imgs, test_size=conf.VALID_SPLIT, shuffle=True)
+train_imgs = reader.dataset_filepath(conf.TRAIN_PATH)
+val_imgs = reader.dataset_filepath(conf.VALID_PATH)
 
-train_batch = U_NET_BatchGenerator(train_imgs, conf.unet_generator_config, shuffle=True, jitter=True, norm=normalize) # shuffle and aug
-valid_batch = U_NET_BatchGenerator(val_imgs, conf.unet_generator_config, shuffle=False, jitter=False, norm=normalize) # not shuffle and not aug
+train_batch = U_NET_BatchGenerator(train_imgs, conf.unet_generator_config, jitter=True, norm=normalize) # shuffle and aug
+valid_batch = U_NET_BatchGenerator(val_imgs, conf.unet_generator_config, jitter=False, norm=normalize) # not shuffle and not aug
 
 early_stop = EarlyStopping(monitor='val_loss',
                            min_delta=0.0001,
