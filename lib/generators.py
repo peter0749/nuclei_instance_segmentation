@@ -53,7 +53,6 @@ class U_NET_BatchGenerator(Sequence):
                     cval=0, # if mode is constant, use a cval between 0 and 255
                     mode='reflect' # use any of scikit-image's warping modes (see 2nd image from the top for examples)
                 )),
-                sometimes(iaa.ElasticTransformation(alpha=(0.5, 3.5), sigma=0.25)), # move pixels locally around (with random strengths)
                 sometimes(iaa.PiecewiseAffine(scale=(0.01, 0.05))), 
             ],
             random_order=True
