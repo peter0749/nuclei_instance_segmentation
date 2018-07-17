@@ -5,7 +5,7 @@ SUBMISSION= '/hdd/home/peter0749/nuclei_instance_segmentation/submission.csv'
 VALID_SPLIT = 0.1
 
 # U-Net for semantic segmentation
-U_NET_DIM = 288
+U_NET_DIM = 256
 
 MARKER_W = 8
 
