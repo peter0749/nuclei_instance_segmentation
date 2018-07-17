@@ -4,7 +4,6 @@ import config as conf
 import losses
 import metrics
 import numpy as np
-from utils import WeightReader
 
 ### U-Net:
 def get_U_Net_model(gpus=1, load_weights=None, verbose=False):

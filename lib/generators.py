@@ -7,10 +7,10 @@ import numpy as np
 import imgaug as ia
 from imgaug import augmenters as iaa
 from keras.utils import Sequence
-from utils import BoundBox, normalize
+from utils import normalize
 from reader import dataset_filepath
 from scipy import ndimage as ndi
-from  skimage.drawskimage  import circle
+from  skimage.draw import circle
 import config as conf
 
 ### U-Net generator ###
