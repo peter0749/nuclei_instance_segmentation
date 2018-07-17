@@ -15,7 +15,7 @@ def get_U_Net_model(gpus=1, load_weights=None, verbose=False):
     from keras.layers.pooling import MaxPooling2D
     from keras.layers.merge import concatenate
     from keras.callbacks import EarlyStopping, ModelCheckpoint
-    from keras.optimizers import SGD, Adam, RMSprop
+    from weightnorm import AdamWithWeightnorm
     from keras.utils.training_utils import multi_gpu_model
     from keras import backend as K
     import tensorflow as tf
@@ -36,7 +36,7 @@ def get_U_Net_model(gpus=1, load_weights=None, verbose=False):
 
         c1x1 = conv(fs[0], 1, act='linear') (inputs)
         c3x3 = conv(max(1, fs[1]//2), 1, act='elu') (inputs)
-        c5x5 = conv(max(1, fs[2]//2), 1, act='elu') (inputs)
+        c5x5 = conv(max(1, fs[2]//3), 1, act='elu') (inputs)
         cpool= MaxPooling2D(pool_size=(3, 3), strides=(1, 1), padding='same') (inputs)
 
         c3x3 = conv(fs[1], 3, act='linear') (c3x3)
@@ -116,19 +116,18 @@ def get_U_Net_model(gpus=1, load_weights=None, verbose=False):
     c11 = _res_conv(c11, 32, 3)
     c11 = _res_conv(c11, 32, 3)
 
-    semantic_segmentation = Conv2D(1, (1, 1), activation='sigmoid', name='nuclei') (c11)
-    markers = Conv2D(1, (1, 1), activation='sigmoid', name='marker') (c11)
-    optimizer = Adam(**conf.U_NET_OPT_ARGS)
+    netout = Conv2D(3, (1, 1), activation='sigmoid', name='nuclei') (c11)
+    optimizer = AdamWithWeightnorm(**conf.U_NET_OPT_ARGS)
     with tf.device('/cpu:0'): ## prevent OOM error
-        cpu_model = Model(inputs=[inputs], outputs=[semantic_segmentation, markers])
-        cpu_model.compile(loss=losses.unet_loss, metrics=[metrics.mean_iou], optimizer=optimizer, loss_weights={'nuclei': 1, 'marker': conf.MARKER_W})
+        cpu_model = Model(inputs=[inputs], outputs=[netout])
+        cpu_model.compile(loss=losses.custom_loss, metrics=[metrics.mean_iou, metrics.mean_iou_marker], optimizer=optimizer)
         if load_weights is not None and os.path.exists(load_weights):
             cpu_model.load_weights(load_weights)
             if verbose:
                 print('Loaded weights')
     if gpus>=2:
         gpu_model = multi_gpu_model(cpu_model, gpus=gpus)
-        gpu_model.compile(loss=losses.unet_loss, metrics=[metrics.mean_iou], optimizer=optimizer, loss_weights={'nuclei': 1, 'marker': conf.MARKER_W})
+        gpu_model.compile(loss=losses.custom_loss, metrics=[metrics.mean_iou, metrics.mean_iou_marker], optimizer=optimizer)
         return gpu_model, cpu_model
     return cpu_model, cpu_model
 ### end U-Net model

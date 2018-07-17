@@ -8,14 +8,6 @@ import numpy as np
 import config as conf
 from keras.callbacks import Callback
 
-class BoundBox:
-    def __init__(self, x, y, c = None):
-        self.x     = x
-        self.y     = y
-        self.c     = c
-    def get_score(self):
-        return self.c
-
 def normalize(image):
     return image.astype(np.float32) / 255.
 
@@ -31,39 +23,6 @@ def softmax(x, axis=-1, t=-100.):
     e_x = np.exp(x)
 
     return e_x / e_x.sum(axis, keepdims=True)
-
-def draw_dots(image_, boxes, radius):
-    image = copy.deepcopy(image_)
-    for box in boxes:
-        x, y = int(box.x*image.shape[1]), int(box.y*image.shape[0])
-        cv2.circle(image, (x,y), radius, (0,255,0), -1) # Green
-    return image
-
-### modified version for binary classification
-### ref. from https://github.com/experiencor/basic-yolo-keras/blob/master/utils.py
-def decode_netout(netout, obj_threshold):
-    grid_h, grid_w = netout.shape[:2]
-
-    boxes = []
-
-    # decode the output by the network
-    netout[..., 2]  = sigmoid(netout[..., 2]) # confidence
-
-    for row in range(grid_h):
-        for col in range(grid_w):
-            confidence = netout[row,col,2]
-            if confidence > obj_threshold:
-                # first 4 elements are x, y, w, and h
-                x, y = netout[row,col,:2]
-
-                x = (col + sigmoid(x)) / grid_w # center position, unit: image width
-                y = (row + sigmoid(y)) / grid_h # center position, unit: image height
-
-                box = BoundBox(x, y, confidence)
-
-                boxes.append(box)
-
-    return boxes
 
 ## ref: https://github.com/keras-team/keras/issues/8463
 class multi_gpu_ckpt(Callback):
@@ -137,6 +96,7 @@ class multi_gpu_ckpt(Callback):
 
 from scipy import ndimage as ndi
 from skimage.morphology import watershed
+from skimage.filters import threshold_otsu
 # Run-length encoding from https://www.kaggle.com/rakhlin/fast-run-length-encoding-python
 # reference from basic-yolo-keras (https://github.com/experiencor/basic-yolo-keras/blob/master/utils.py)
 
@@ -167,30 +127,22 @@ def rle_decode(mask_rle, shape):
         img[lo:hi] = 1
     return img.reshape(shape)
 
-def lb(image, marker):
+def lb(image, marker, distance):
     if np.sum(image) < np.sum(marker):
         image = marker
     else:
         marker = np.array((marker==1) & (image==1))
-    distance = ndi.distance_transform_edt(image)
     markers = ndi.label(marker)[0]
     labels = watershed(-distance, markers, mask=image)
     if np.sum(labels) == 0:
         labels[0,0] = 1
     return labels
 
-def get_rles(lab_img):
+def get_label(x, marker, dt):
+    x_thres = threshold_otsu(x)
+    marker_thres = threshold_otsu(marker)
+    return lb(x > x_thres, marker > marker_thres, dt)
+
+def label_to_rles(lab_img):
     for i in range(1, lab_img.max() + 1):
         yield rle_encoding(lab_img == i)
-
-class WeightReader:
-    def __init__(self, weight_file):
-        self.offset = 4
-        self.all_weights = np.fromfile(weight_file, dtype='float32')
-
-    def read_bytes(self, size):
-        self.offset = self.offset + size
-        return self.all_weights[self.offset-size:self.offset]
-
-    def reset(self):
-        self.offset = 4
