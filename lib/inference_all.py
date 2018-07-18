@@ -14,7 +14,7 @@ import models
 import reader
 import config as conf
 from sklearn.model_selection import train_test_split
-from utils import decode_netout, draw_dots, rle_encoding, get_rles, lb
+from utils import rle_encoding, get_label, lb, label_to_rles
 import cv2
 import matplotlib
 matplotlib.use('Agg')

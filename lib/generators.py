@@ -2,6 +2,8 @@ import os
 import math
 import glob
 import cv2
+import imgaug as ia
+from imgaug import augmenters as iaa
 import copy
 import numpy as np
 from keras.utils import Sequence
@@ -27,6 +29,28 @@ class U_NET_BatchGenerator(Sequence):
 
         self.images = copy.deepcopy(images)
 
+        sometimes = lambda aug: iaa.Sometimes(0.5, aug)
+        self.seq_color = iaa.Sequential(
+            [
+                iaa.SomeOf((0, 3),
+                    [
+                        iaa.Sharpen(alpha=(0, 1.0), lightness=(0.75, 1.2)),
+                        iaa.Emboss(alpha=(0, 0.3), strength=(0, 2.0)),
+                        iaa.SimplexNoiseAlpha(iaa.OneOf([
+                            iaa.EdgeDetect(alpha=(0.5, 1.0)),
+                            iaa.DirectedEdgeDetect(alpha=(0.5, 1.0), direction=(0.0, 1.0)),
+                        ])),
+                        iaa.OneOf([
+                            iaa.Dropout((0.01, 0.1), per_channel=0.5), # randomly remove up to 10% of the pixels
+                            iaa.CoarseDropout((0.03, 0.15), size_percent=(0.02, 0.05), per_channel=0.2),
+                        ]),
+                        iaa.Invert(0.05, per_channel=True),
+                        iaa.ContrastNormalization((0.5, 2.0), per_channel=0.5), 
+                        iaa.Grayscale(alpha=(0.0, 1.0))
+                    ], random_order=True
+                )
+            ], random_order=True
+        )
     def __len__(self):
         return int(np.ceil(float(len(self.images))/self.config['BATCH_SIZE']))
 
@@ -139,9 +163,22 @@ class U_NET_BatchGenerator(Sequence):
             image = np.clip(image + np.random.randn(*image.shape)*sigma, 0, 1)
             image = np.clip(image * 255, 0, 255) # apply gamma and convert back to range [0,255]
             image = image.astype(np.uint8) # convert back to uint8
-            if np.random.binomial(1, .05):
+
+            if np.random.binomial(1, .1):
+                image = image[...,np.random.permutation(int(image.shape[-1]))]
+
+            if np.random.binomial(1, .1):
                 ksize = np.random.choice([3,5,7])
                 image = cv2.GaussianBlur(image, (ksize,ksize), 0)
+
+            if np.random.binomial(1, .1): # heavy data augmentation
+                image = self.seq_color.augment_image(image)
+            if np.random.binomial(1, .05): # heavy data augmentation
+                det_warp = iaa.PiecewiseAffine(scale=(0.01, 0.04)).to_deterministic()
+                image = det_warp.augment_image(image)
+                mask = det_warp.augment_image(mask)
+                marker = det_warp.augment_image(marker)
+                dt = det_warp.augment_image(dt)
 
         # resize the image to standard size
         inter   = cv2.INTER_LINEAR if (image.shape[0]<self.config['IMAGE_H'] or image.shape[1]<self.config['IMAGE_W']) else cv2.INTER_AREA

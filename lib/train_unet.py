@@ -47,7 +47,7 @@ unet_model.fit_generator(generator        = train_batch,
                     validation_data  = valid_batch,
                     validation_steps = len(valid_batch),
                     callbacks        = [early_stop, checkpoint, tensorboard],
-                    max_queue_size   = 3,
+                    max_queue_size   = 30,
                     shuffle          = True,
                     workers = conf.GENERATOR_WORKERS)
 
