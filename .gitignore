@@ -4,5 +4,3 @@ nohup.out
 *.pyc
 *.npy
 *.csv
-*.png
-*.jpg
