@@ -15,7 +15,7 @@ def get_U_Net_model(gpus=1, load_weights=None, verbose=False):
     from keras.layers.merge import concatenate
     from keras.callbacks import EarlyStopping, ModelCheckpoint
     from weightnorm import AdamWithWeightnorm
-    from keras.utils.training_utils import multi_gpu_model
+    from keras.utils import multi_gpu_model
     from keras import backend as K
     import tensorflow as tf
 
