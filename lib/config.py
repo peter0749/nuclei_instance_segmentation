@@ -18,7 +18,7 @@ U_NET_BATCH_SIZE=16
 
 GENERATOR_WORKERS=7
 
-U_NET_EPOCHS=400
+U_NET_EPOCHS=228
 
 U_NET_CKPT = '/hdd/dataset/nuclei_dataset/unet.h5'
 
@@ -26,8 +26,6 @@ U_NET_TFBOARD_DIR = '/hdd/dataset/nuclei_dataset/unet_tfboard'
 U_NET_OPT_ARGS = {
     'lr'              : 1e-3,
 }
-
-U_NET_EARLY_STOP = 30
 
 U_NET_OUT_DIR = '/hdd/dataset/nuclei_dataset/unet_out'
 

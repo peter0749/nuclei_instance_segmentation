@@ -127,21 +127,22 @@ def rle_decode(mask_rle, shape):
         img[lo:hi] = 1
     return img.reshape(shape)
 
-def lb(image, marker, distance):
+def lb(image, marker):
     if np.sum(image) < np.sum(marker):
         image = marker
     else:
         marker = np.array((marker==1) & (image==1))
     markers = ndi.label(marker)[0]
+    distance = ndi.distance_transform_edt(image)
     labels = watershed(-distance, markers, mask=image)
     if np.sum(labels) == 0:
         labels[0,0] = 1
     return labels
 
-def get_label(x, marker, dt):
+def get_label(x, marker):
     x_thres = threshold_otsu(x)
     marker_thres = threshold_otsu(marker)
-    return lb(x > x_thres, marker > marker_thres, dt)
+    return lb(x > x_thres, marker > marker_thres)
 
 def label_to_rles(lab_img):
     for i in range(1, lab_img.max() + 1):

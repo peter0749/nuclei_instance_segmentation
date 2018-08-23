@@ -36,10 +36,9 @@ preds_test_upsampled = []
 for n in tqdm(range(len(imgs_batch)), total=len(imgs_batch), ascii=True):
     nuclei = cv2.resize(preds[n,...,0], imgs_shape[n])
     marker = cv2.resize(preds[n,...,1], imgs_shape[n])
-    dt     = cv2.resize(preds[n,...,2], imgs_shape[n])
-    preds_test_upsampled.append((nuclei, marker, dt))
+    preds_test_upsampled.append((nuclei, marker))
 
-del imgs_batch, preds, dt
+del imgs_batch, preds
 gc.collect() # release memory
 
 print('Post-processing...')

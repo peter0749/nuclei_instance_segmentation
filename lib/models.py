@@ -6,7 +6,7 @@ import metrics
 import numpy as np
 
 ### U-Net:
-def get_U_Net_model(gpus=1, load_weights=None, verbose=False):
+def get_U_Net_model(gpus=1, load_weights=None, verbose=False, train=False):
     from keras.models import Model, load_model
     from keras.layers import Input, Add, Activation, Dropout
     from keras.layers.core import Lambda
@@ -115,13 +115,18 @@ def get_U_Net_model(gpus=1, load_weights=None, verbose=False):
     c11 = _res_conv(c11, 32, 3)
     c11 = _res_conv(c11, 32, 3)
 
-    netout = Conv2D(3, (1, 1), activation='sigmoid', name='nuclei') (c11)
+    netout = Conv2D(2, (1, 1), activation='sigmoid', name='nuclei') (c11)
+    if train:
+        def dummy(x):
+            d = x[...,0:1]
+            return K.concatenate([x, d], axis=-1)
+        netout = Lambda(dummy) (netout)
     optimizer = AdamWithWeightnorm(**conf.U_NET_OPT_ARGS)
     with tf.device('/cpu:0'): ## prevent OOM error
         cpu_model = Model(inputs=[inputs], outputs=[netout])
         cpu_model.compile(loss=losses.custom_loss, metrics=[metrics.mean_iou, metrics.mean_iou_marker], optimizer=optimizer)
         if load_weights is not None and os.path.exists(load_weights):
-            cpu_model.load_weights(load_weights)
+            cpu_model.load_weights(load_weights, by_name=True)
             if verbose:
                 print('Loaded weights')
     if gpus>=2:
