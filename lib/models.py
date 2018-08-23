@@ -18,7 +18,7 @@ def get_yolo_model(img_size=conf.YOLO_DIM, gpus=1, load_weights=None, verbose=Fa
     from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
     from keras.optimizers import SGD, Adam, RMSprop
     from keras.layers.merge import concatenate
-    from keras.utils.training_utils import multi_gpu_model
+    from keras.utils import multi_gpu_model
     import keras.backend as K
 
     YOLO_GRID = conf.YOLO_GRID
@@ -220,7 +220,7 @@ def get_U_Net_model(img_size=conf.U_NET_DIM, gpus=1, load_weights=None, verbose=
     from keras.layers.merge import concatenate
     from keras.callbacks import EarlyStopping, ModelCheckpoint
     from keras.optimizers import SGD, Adam, RMSprop
-    from keras.utils.training_utils import multi_gpu_model
+    from keras.utils import multi_gpu_model
     from keras import backend as K
     import tensorflow as tf
 
