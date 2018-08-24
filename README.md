@@ -1,5 +1,8 @@
 # nuclei_instance_segmentation
 
+### NOTE: PLEASE USE KERAS==2.1.4
+### WE EXPERIENCED STRANGE ISSUE WITH KERAS==2.2.0
+
 ### Model
 
 ![](images/U-Net-V2-white-bg.png)
