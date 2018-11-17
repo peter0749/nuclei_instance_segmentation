@@ -1,8 +1,8 @@
 # ROOT TO DATASET (DATA & TEST)
-TRAIN_PATH = '/hdd/dataset/nuclei_dataset/stage1_train'
-VALID_PATH = '/hdd/dataset/nuclei_dataset/stage1_valid'
-TEST_PATH = '/hdd/dataset/nuclei_dataset/stage2_test'
-SUBMISSION= '/hdd/home/peter0749/nuclei_instance_segmentation/submission.csv'
+TRAIN_PATH = '/media/peter/F68E67298E66E19B/nuclei/stage1_train'
+VALID_PATH = '/media/peter/F68E67298E66E19B/nuclei/stage1_valid'
+TEST_PATH = '/media/peter/F68E67298E66E19B/nuclei/stage2_test_final'
+SUBMISSION= '/media/peter/F68E67298E66E19B/nuclei/submission.csv'
 
 # U-Net for semantic segmentation
 U_NET_DIM = 256
@@ -20,16 +20,16 @@ GENERATOR_WORKERS=7
 
 U_NET_EPOCHS=400
 
-U_NET_CKPT = '/hdd/dataset/nuclei_dataset/unet.h5'
+U_NET_CKPT = '/media/peter/F68E67298E66E19B/nuclei/unet.h5'
 
-U_NET_TFBOARD_DIR = '/hdd/dataset/nuclei_dataset/unet_tfboard'
+U_NET_TFBOARD_DIR = '/media/peter/F68E67298E66E19B/nuclei/tfboard'
 U_NET_OPT_ARGS = {
     'lr'              : 1e-3,
 }
 
 U_NET_EARLY_STOP = 30
 
-U_NET_OUT_DIR = '/hdd/dataset/nuclei_dataset/unet_out'
+U_NET_OUT_DIR = '/media/peter/F68E67298E66E19B/nuclei/unet_out'
 
 ### !!! DO NOT EDIT THE CONFIGURATION BELOW !!! ###
 

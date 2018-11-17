@@ -11,7 +11,7 @@ from keras.callbacks import Callback
 def normalize(image):
     return image.astype(np.float32) / 255.
 
-def sigmoid(x):  
+def sigmoid(x):
     return 1. / (1. + np.exp(-x))
 
 def softmax(x, axis=-1, t=-100.):
@@ -114,7 +114,7 @@ def rle_decode(mask_rle, shape):
     '''
     from: https://www.kaggle.com/paulorzp/run-length-encode-and-decode
     mask_rle: run-length as string formated (start length)
-    shape: (height,width) of array to return 
+    shape: (height,width) of array to return
     Returns numpy array, 1 - mask, 0 - background
 
     '''
